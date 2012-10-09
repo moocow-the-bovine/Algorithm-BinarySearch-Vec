@@ -7,7 +7,7 @@ use strict;
 use bytes;
 
 our @ISA = qw(Exporter);
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 our ($HAVE_XS);
 eval {
@@ -26,7 +26,7 @@ eval {
 ## Exports
 ##======================================================================
 
-our $KEY_NOT_FOUND = unpack('N',pack('N',-1));
+our $KEY_NOT_FOUND = 0xffffffff;
 
 our (%EXPORT_TAGS, @EXPORT_OK, @EXPORT);
 BEGIN {
@@ -34,9 +34,10 @@ BEGIN {
     (
      api   => [qw( vbsearch  vbsearch_lb  vbsearch_ub),
 	       qw(vabsearch vabsearch_lb vabsearch_ub),
+	       qw(vvbsearch vvbsearch_lb vvbsearch_ub),
 	      ],
      const => [qw($KEY_NOT_FOUND)],
-     debug => [qw(vget vset)],
+     debug => [qw(vget vset vec2array)],
     );
   $EXPORT_TAGS{all}     = [map {@$_} @EXPORT_TAGS{qw(api const debug)}];
   $EXPORT_TAGS{default} = [map {@$_} @EXPORT_TAGS{qw(api const)}];
@@ -89,6 +90,7 @@ sub _vbsearch_lb {
   my ($vr,$key,$nbits,$ilo,$ihi) = (\$_[0],@_[1..$#_]);
   $ilo = 0 if (!defined($ilo));
   $ihi = 8*length($$vr)/$nbits if (!defined($ihi));
+  my $imin = $ilo;
   my ($imid);
   while ($ihi-$ilo > 1) {
     $imid = ($ihi+$ilo) >> 1;
@@ -100,7 +102,7 @@ sub _vbsearch_lb {
   }
   return $ilo if (vec($$vr,$ilo,$nbits)==$key);
   return $ihi if (vec($$vr,$ihi,$nbits)==$key);
-  return $ilo==0 ? $KEY_NOT_FOUND : $ilo;
+  return $ilo==$imin ? $KEY_NOT_FOUND : $ilo;
 }
 
 ##--------------------------------------------------------------
@@ -110,6 +112,7 @@ sub _vbsearch_ub {
   my ($vr,$key,$nbits,$ilo,$ihi) = (\$_[0],@_[1..$#_]);
   $ilo = 0 if (!defined($ilo));
   $ihi = 8*length($$vr)/$nbits if (!defined($ihi));
+  my $imax = $ihi;
   my ($imid);
   while ($ihi-$ilo > 1) {
     $imid = ($ihi+$ilo) >> 1;
@@ -121,7 +124,7 @@ sub _vbsearch_ub {
   }
   return $ihi if (vec($$vr,$ihi,$nbits)==$key);
   return $ilo if (vec($$vr,$ilo,$nbits)>=$key);
-  return $ihi;
+  return $ihi>=$imax ? $KEY_NOT_FOUND : $ihi;
 }
 
 ##======================================================================
@@ -149,14 +152,43 @@ sub _vabsearch_ub {
   return [map {vbsearch_ub($_[0],$_,@_[2..$#_])} @{$_[1]}];
 }
 
+##======================================================================
+## API: Search: vec-wise
+
+## \@a = vec2array($vec,$nbits)
+sub vec2array {
+  return [map {vec($_[0],$_,$_[1])} (0..(length($_[0])*8/$_[1]-1))];
+}
+
+##--------------------------------------------------------------
+## $indices = vvbsearch($v,$keys,$nbits)
+## $indices = vvbsearch($v,$keys,$nbits,$ilo,$ihi)
+sub _vvbsearch {
+  return pack('N*', @{vabsearch($_[0],vec2array(@_[1,2]),@_[2..$#_])});
+}
+
+##--------------------------------------------------------------
+## $indices = vvbsearch_lb($v,$keys,$nbits)
+## $indices = vvbsearch_lb($v,$keys,$nbits,$ilo,$ihi)
+sub _vvbsearch_lb {
+  return pack('N*', @{vabsearch_lb($_[0],vec2array(@_[1,2]),@_[2..$#_])});
+}
+
+##--------------------------------------------------------------
+## $indices = vvbsearch_ub($v,$keys,$nbits)
+## $indices = vvbsearch_ub($v,$keys,$nbits,$ilo,$ihi)
+sub _vvbsearch_ub {
+  return pack('N*', @{vabsearch_ub($_[0],vec2array(@_[1,2]),@_[2..$#_])});
+}
+
 
 ##======================================================================
 ## delegate: attempt to delegate to XS module
 foreach my $func (map {@$_} @EXPORT_TAGS{qw(api debug)}) {
   no warnings 'redefine';
-  if ($HAVE_XS) {
+  if ($HAVE_XS && Algorithm::BinarySearch::Vec::XS->can($func)) {
     eval "\*$func = \\&Algorithm::BinarySearch::Vec::XS::$func;";
-  } else {
+  } elsif (__PACKAGE__->can("_$func")) {
     eval "\*$func = \\&_$func;";
   }
 }
@@ -192,6 +224,18 @@ Algorithm::BinarySearch::Vec - binary search functions for vec()-vectors with fa
  $indices = vabsearch   ($v,\@keys,$nbits,$lo,$hi); ##-- match only
  $indices = vabsearch_lb($v,\@keys,$nbits,$lo,$hi); ##-- lower bound
  $indices = vabsearch_ub($v,\@keys,$nbits,$lo,$hi); ##-- upper bound
+ 
+ ##-------------------------------------------------------------
+ ## Search: vector-wise
+ $ixvec = vvbsearch   ($v,$keyvec,$nbits,$lo,$hi); ##-- match only
+ $ixvec = vvbsearch_lb($v,$keyvec,$nbits,$lo,$hi); ##-- lower bound
+ $ixvec = vvbsearch_ub($v,$keyvec,$nbits,$lo,$hi); ##-- upper bound
+ 
+ ##-------------------------------------------------------------
+ ## Debugging
+ $val  = vget($vec,$i,$nbits);
+ undef = vset($vec,$i,$nbits, $newval);
+ $vals = vec2array($vec,$nbits);
 
 
 =head1 DESCRIPTION
@@ -309,6 +353,7 @@ the C++ STL function upper_bound().
 
 Binary search for each value in the ARRAY-ref \@keys in the vec()-style vector $v.
 Other arguments are as for L<vbsearch()|vbsearch>.
+Returns an ARRAY-ref of indices.
 This is equivalent to (but usually much faster than):
 
  $indices = [map {vbsearch($v,$_,$nbits,$ilo,$ihi)} @keys];
@@ -318,6 +363,7 @@ This is equivalent to (but usually much faster than):
 
 Binary search for the lower-bound of each value in the ARRAY-ref \@keys in the vec()-style vector $v.
 Other arguments are as for L<vbsearch()|vbsearch>.
+Returns an ARRAY-ref of indices.
 This is equivalent to (but usually much faster than):
 
  $indices = [map {vbsearch_lb($v,$_,$nbits,$ilo,$ihi)} @keys];
@@ -326,9 +372,52 @@ This is equivalent to (but usually much faster than):
 
 Binary search for the upper-bound of each value in the ARRAY-ref \@keys in the vec()-style vector $v.
 Other arguments are as for L<vbsearch()|vbsearch>.
+Returns an ARRAY-ref of indices.
 This is equivalent to (but usually much faster than):
 
  $indices = [map {vbsearch_ub($v,$_,$nbits,$ilo,$ihi)} @keys];
+
+=cut
+
+##======================================================================
+## API: Search: vec-wise
+=pod
+
+=head2 Search: vec-wise
+
+=head3 vvbsearch($v,$keyvec,$nbits,?$ilo,?$ihi)
+
+Binary search for each key in the key-vector $keyvec in the "haystack"-vector $v.
+Other arguments are as for L<vbsearch()|vbsearch>.
+Returns a vec()-vector of 32-bit indices.
+This is equivalent to:
+
+ $ixvec = pack('N*', @{vabsearch($v,vec2array($keyvec,$nbits),$ilo,$ihi)});
+
+where:
+
+ sub vec2array {
+   my ($vec,$nbits) = @_;
+   return [map {vec($vec,$_,$nbits)} (0..(length($vec)*8/$nbits-1))];
+ }
+
+=head3 vabsearch_lb($v,$keyvec,$nbits,?$ilo,?$ihi)
+
+Binary lower-bound search for each key in the key-vector $keyvec in the "haystack"-vector $v.
+Other arguments are as for L<vbsearch()|vbsearch>.
+Returns a vec()-vector of 32-bit indices.
+This is equivalent to:
+
+ $ixvec = pack('N*', @{vabsearch_lb($v,vec2array($keyvec,$nbits),$ilo,$ihi)});
+
+=head3 vabsearch_ub($v,$keyvec,$nbits,?$ilo,?$ihi)
+
+Binary upper-bound search for each key in the key-vector $keyvec in the "haystack"-vector $v.
+Other arguments are as for L<vbsearch()|vbsearch>.
+Returns a vec()-vector of 32-bit indices.
+This is equivalent to:
+
+ $ixvec = pack('N*', @{vabsearch_ub($v,vec2array($keyvec,$nbits),$ilo,$ihi)});
 
 =cut
 

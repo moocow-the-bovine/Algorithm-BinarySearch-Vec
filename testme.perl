@@ -5,6 +5,7 @@ use lib qw(./blib/lib ./blib/arch);
 use Algorithm::BinarySearch::Vec ':all';
 
 our $NOKEY = $KEY_NOT_FOUND;
+our $PKG   = 'Algorithm::BinarySearch::Vec';
 print STDERR "Algorithm::BinarySearch::Vec::HAVE_XS = $Algorithm::BinarySearch::Vec::HAVE_XS\n";
 
 BEGIN {
@@ -12,7 +13,7 @@ BEGIN {
 }
 
 ##--------------------------------------------------------------
-## utils: vector creation
+## utils: generic
 
 ## $vec = makevec($nbits,\@vals)
 sub makevec {
@@ -27,6 +28,37 @@ sub vec2list {
   use bytes;
   my ($vec,$nbits) = @_;
   return [map {vec($vec,$_,$nbits)} (0..(length($vec)*8/$nbits-1))];
+}
+
+## $str = n2str($n)
+sub n2str {
+  return !defined($_[0]) ? 'undef' : ($_[0]==$NOKEY ? 'NOKEY' : ($_[0]+0));
+}
+
+## $str = l2str(\@vlist)
+sub l2str {
+  return join(' ', map {n2str($_)} @{$_[0]});
+}
+
+## $str = h2str(\%i2j)
+sub h2str {
+  my $h = shift;
+  no warnings 'numeric';
+  return join(' ', map {(n2str($_).":".n2str($h->{$_}))} sort {$a<=>$b} keys %$h);
+}
+
+sub check_search {
+  my ($func,$nbits,$l,$key,$want) = @_;
+  print "check_search:$func(nbits=$nbits,key=$key,l=[",l2str($l),"]): ";
+  my $code = eval "\\\&$func";
+  my $v    = makevec($nbits,$l);
+  my $i    = $code->($v,$key,$nbits); #, 0,$#$l);
+  my $istr = n2str($i);
+  my $wstr = n2str($want);
+  my $rc   = ($istr eq $wstr);
+  print
+    (($rc ? "good (=$wstr)" : "BAD (want=$wstr != got=$istr)"), "\n");
+  return $rc;
 }
 
 ##--------------------------------------------------------------
@@ -143,116 +175,92 @@ sub test_vset {
 }
 #test_vset();
 
+##======================================================================
+## test: element-wise: generic
+
 
 ##--------------------------------------------------------------
 ## test: bsearch (raw)
 
 sub check_bsearch {
-  my ($nbits,$l,$key,$want) = @_;
-  print STDERR "check_bsearch(nbits=$nbits,key=$key,l=[",join(' ',@$l),"]): ";
-  my $v = makevec($nbits,$l);
-  my $i = vbsearch($v,$key,$nbits); #, 0,$#$l);
-  my $istr = n2str($i);
-  my $wstr = n2str($want);
-  my $rc = ($istr eq $wstr);
-  print STDERR ($rc ? "ok (=$wstr)" : "NOT ok (want=$wstr != got=$istr)"), "\n";
-  return $rc;
+  check_search('vbsearch',@_);
 }
 
 sub test_bsearch {
   my ($l,$i);
   my $rc = 1;
   $l = [qw(1 2 4 8 16 32 64 128 256)];
-  $rc &&= check_bsearch(32,$l,8, 3);
-  $rc &&= check_bsearch(32,$l,7, $NOKEY);
-  $rc &&= check_bsearch(32,$l,0, $NOKEY);
-  $rc &&= check_bsearch(32,$l,512, $NOKEY);
-  $rc &&= check_bsearch(32,[qw(0 1 1 1 2)],1,1);
+  $rc &&= check_bsearch(32,$l, 8=>3);
+  $rc &&= check_bsearch(32,$l, 7=>$NOKEY);
+  $rc &&= check_bsearch(32,$l, 0=>$NOKEY);
+  $rc &&= check_bsearch(32,$l, 512=>$NOKEY);
+  $rc &&= check_bsearch(32,[qw(0 1 1 1 2)], 1=>1);
   die("test_bsearch() failed!\n") if (!$rc);
   print "\n";
 }
-test_bsearch();
+#test_bsearch();
 
 
 ##--------------------------------------------------------------
 ## test: lower_bound
 
 sub check_lb {
-  my ($nbits,$l,$key,$want) = @_;
-  print STDERR "check_lb(nbits=$nbits,key=$key,l=[",join(' ',@$l),"]): ";
-  my $v = makevec($nbits,$l);
-  my $i = vbsearch_lb($v,$key,$nbits, 0,$#$l);
-  my $istr = n2str($i);
-  my $wstr = n2str($want);
-  my $rc = ($istr eq $wstr);
-  print STDERR ($rc ? "ok (=$wstr)" : "NOT ok (want=$wstr != got=$istr)"), "\n";
-  return $rc;
+  check_search('vbsearch_lb',@_);
 }
 
 sub test_lb {
   my ($l,$i);
   $l = [qw(1 2 4 8 16 32 64 128 256)];
-  check_lb(32,$l,8, 3);
-  check_lb(32,$l,7, 2);
-  check_lb(32,$l,0, $NOKEY);
-  check_lb(32,$l,512, $#$l);
-  check_lb(32,[qw(0 1 1 1 2)],1,1);
+  check_lb(32,$l, 8=>3);
+  check_lb(32,$l, 7=>2);
+  check_lb(32,$l, 0=>$NOKEY);
+  check_lb(32,$l, 512=>$#$l);
+  check_lb(32,[qw(0 1 1 1 2)], 1=>1);
   print "\n";
 }
-test_lb();
+#test_lb();
 
 ##--------------------------------------------------------------
 ## test: upper_bound
 
 sub check_ub {
-  my ($nbits,$l,$key,$want) = @_;
-  print STDERR "check_ub(nbits=$nbits,key=$key,l=[",join(' ',@$l),"]): ";
-  my $v = makevec($nbits,$l);
-  my $i = vbsearch_ub($v,$key,$nbits, 0,$#$l);
-  my $rc = ($i==$want);
-  print STDERR ($rc ? "ok (=$want)" : "NOT ok (want=$want != got=$i)"), "\n";
-  return $rc;
+  check_search('vbsearch_ub',@_);
 }
 
 sub test_ub {
   my ($l,$i);
   $l = [qw(1 2 4 8 16 32 64 128 256)];
-  check_ub(32,$l,8, 3);
-  check_ub(32,$l,7, 3);
-  check_ub(32,$l,0, 0);
-  check_ub(32,$l,512, $#$l);
-  check_ub(32,[qw(0 1 1 1 2)],1,3);
+  check_ub(32,$l, 8=>3);
+  check_ub(32,$l, 7=>3);
+  check_ub(32,$l, 0=>0);
+  check_ub(32,$l, 512=>$NOKEY);
+  check_ub(32,[qw(0 1 1 1 2)], 1=>3);
   print "\n";
 }
-test_ub();
+#test_ub();
 
 
 ##--------------------------------------------------------------
 ## test: bsearch: array
 
-## $str = n2str($n)
-sub n2str {
-  return !defined($_[0]) ? 'undef' : ($_[0]==$NOKEY ? 'NOKEY' : ($_[0]+0));
-}
-
-## $str = nl2str(\@list)
-sub nl2str {
-  return join(' ', map {n2str($_)} @{$_[0]});
-}
 
 sub check_asearch {
-  my ($method, $nbits,$l,$keys,$want, $label,$verbose) = @_;
-  $label   = "check_asearch:${method}(nbits=$nbits,keys=[".nl2str($keys)."])" if (!defined($label));
-  $method  = UNIVERSAL::can('main',$method) if (!ref($method));
-  $verbose = 1 if (!defined($verbose));
-  print STDERR "$label: " if ($verbose);
-  my $v    = ref($l) ? makevec($nbits,$l) : $l;
-  my $got  = $method->($v,$keys,$nbits);
-  my $gstr = nl2str($got);
-  my $wstr = nl2str($want);
-  my $ok   = ($gstr eq $wstr);
-  print STDERR ($ok ? "ok (=[$wstr])" : "NOT ok (want=[$wstr] != got=[$gstr])"), "\n" if ($verbose);
-  return $ok;
+  my ($func,$nbits,$l,$key2want) = @_;
+  print "check_asearch:$func(nbits=$nbits,l=[",l2str($l),"],want={",h2str($key2want),"}): ";
+  my $code = (main->can($func)
+	      || $PKG->can($func)
+	      || "${PKG}::XS"->can($func)
+	      || $PKG->can("_$func"));
+  my $v    = makevec($nbits,$l);
+  my @keys = sort {$a<=>$b} keys %$key2want;
+  my $want = @$key2want{@keys};
+  my $il   = $code->($v,\@keys,$nbits); #, 0,$#$l);
+  my $wstr = h2str($key2want);
+  my $istr = h2str({map {($keys[$_]=>$il->[$_])} (0..$#keys)});
+  my $rc   = ($istr eq $wstr);
+  print
+    (($rc ? "good (=[$wstr])" : "BAD (want=[$wstr] != got=[$istr])"), "\n");
+  return $rc;
 }
 
 sub test_absearch {
@@ -260,13 +268,49 @@ sub test_absearch {
   my $rc = 1;
   $l = [qw(1 2 4 8 16 32 64 128 256)];
   my $keys = [qw(8 7 0 1 512 32 256)];
-  $rc &&= check_asearch('vabsearch',    32,$l,$keys,[3,$NOKEY,$NOKEY,0,$NOKEY,5,8]);
-  $rc &&= check_asearch('vabsearch_lb', 32,$l,$keys,[3,     2,     0,0,     8,5,8]);
-  $rc &&= check_asearch('vabsearch_ub', 32,$l,$keys,[3,     3,     0,0,     9,5,8]);
+  $rc &&= check_asearch('_vabsearch',    32,$l, {8=>3, 7=>$NOKEY, 0=>$NOKEY, 1=>0, 512=>$NOKEY, 32=>5, 256=>8});
+  $rc &&= check_asearch('_vabsearch_lb', 32,$l, {8=>3, 7=>2,      0=>$NOKEY, 1=>0, 512=>8,      32=>5, 256=>8});
+  $rc &&= check_asearch('_vabsearch_ub', 32,$l, {8=>3, 7=>3,      0=>0,      1=>0, 512=>$NOKEY, 32=>5, 256=>8});
   die("test_absearch() failed!\n") if (!$rc);
   print "\n";
 }
-#test_absearch();
+#test_absearch(); exit 0;
+
+##--------------------------------------------------------------
+## test: bsearch: vec-wise
+
+sub check_vvsearch {
+  my ($func,$nbits,$l,$key2want) = @_;
+  print "check_vvsearch:$func(nbits=$nbits,l=[",l2str($l),"],want={",h2str($key2want),"}): ";
+  my $code = (main->can($func)
+	      || $PKG->can($func)
+	      || "${PKG}::XS"->can($func)
+	      || $PKG->can("_$func"));
+  my $v    = makevec($nbits,$l);
+  my @keys = sort {$a<=>$b} keys %$key2want;
+  my $keyv = makevec($nbits,\@keys);
+  my $want = @$key2want{@keys};
+  my $iv   = $code->($v,$keyv,$nbits); #, 0,$#$l);
+  my $istr = h2str($key2want);
+  my $wstr = h2str({map {($keys[$_]=>vec($iv,$_,32))} (0..$#keys)});
+  my $rc   = ($istr eq $wstr);
+  print
+    (($rc ? "good (=[$wstr])" : "BAD (want=[$wstr] != got=[$istr])"), "\n");
+  return $rc;
+}
+
+sub test_vvsearch {
+  my ($l,$i);
+  my $rc = 1;
+  $l = [qw(1 2 4 8 16 32 64 128 256)];
+  my $keys = [qw(8 7 0 1 512 32 256)];
+  $rc &&= check_vvsearch('vvbsearch',    32,$l, {8=>3, 7=>$NOKEY, 0=>$NOKEY, 1=>0, 512=>$NOKEY, 32=>5, 256=>8});
+  $rc &&= check_vvsearch('vvbsearch_lb', 32,$l, {8=>3, 7=>2,      0=>$NOKEY, 1=>0, 512=>8,      32=>5, 256=>8});
+  $rc &&= check_vvsearch('vvbsearch_ub', 32,$l, {8=>3, 7=>3,      0=>0,      1=>0, 512=>$NOKEY, 32=>5, 256=>8});
+  die("test_absearch() failed!\n") if (!$rc);
+  print "\n";
+}
+test_vvsearch();
 
 
 ##--------------------------------------------------------------

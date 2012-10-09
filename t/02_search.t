@@ -12,7 +12,7 @@ my $PKG   = 'Algorithm::BinarySearch::Vec';
 do "$TEST_DIR/common.plt"
   or die("could not load $TEST_DIR/common.plt");
 
-plan(test => 36);
+plan(test => 42);
 
 ##--------------------------------------------------------------
 ## utils
@@ -71,11 +71,11 @@ sub check_search {
 ## test: element-wise: bsearch: (0) +(5*2) = (1..10)
 foreach my $func ("${PKG}::_vbsearch", "${PKG}::XS::vbsearch") {
   my $l = [qw(1 2 4 8 16 32 64 128 256)];
-  check_search($func, 32,$l,8,3);
-  check_search($func, 32,$l,7, $NOKEY);
-  check_search($func, 32,$l,0, $NOKEY);
-  check_search($func, 32,$l,512, $NOKEY);
-  check_search($func, 32,[qw(0 1 1 1 2)],1,1);
+  check_search($func, 32,$l, 8=>3);
+  check_search($func, 32,$l, 7=>$NOKEY);
+  check_search($func, 32,$l, 0=>$NOKEY);
+  check_search($func, 32,$l, 512=>$NOKEY);
+  check_search($func, 32,[qw(0 1 1 1 2)], 1=>1);
   print "\n";
 }
 
@@ -83,11 +83,11 @@ foreach my $func ("${PKG}::_vbsearch", "${PKG}::XS::vbsearch") {
 ## test: element-wise: bsearch_lb: (10) +(5*2) = (11..20)
 foreach my $func ("${PKG}::_vbsearch_lb", "${PKG}::XS::vbsearch_lb") {
   my $l = [qw(1 2 4 8 16 32 64 128 256)];
-  check_search($func,32,$l,8, 3);
-  check_search($func,32,$l,7, 2);
-  check_search($func,32,$l,0, $NOKEY);
-  check_search($func,32,$l,512, $#$l);
-  check_search($func,32,[qw(0 1 1 1 2)],1,1);
+  check_search($func,32,$l, 8=>3);
+  check_search($func,32,$l, 7=>2);
+  check_search($func,32,$l, 0=>$NOKEY);
+  check_search($func,32,$l, 512=>8);
+  check_search($func,32,[qw(0 1 1 1 2)],1=>1);
   print "\n";
 }
 
@@ -95,11 +95,11 @@ foreach my $func ("${PKG}::_vbsearch_lb", "${PKG}::XS::vbsearch_lb") {
 ## test: element-wise: bsearch_ub: (20) +(5*2) = (21..30)
 foreach my $func ("${PKG}::_vbsearch_ub", "${PKG}::XS::vbsearch_ub") {
   my $l = [qw(1 2 4 8 16 32 64 128 256)];
-  check_search($func,32,$l,8, 3);
-  check_search($func,32,$l,7, 3);
-  check_search($func,32,$l,0, 0);
-  check_search($func,32,$l,512, $#$l+1);
-  check_search($func,32,[qw(0 1 1 1 2)],1,3);
+  check_search($func,32,$l, 8=>3);
+  check_search($func,32,$l, 7=>3);
+  check_search($func,32,$l, 0=>0);
+  check_search($func,32,$l, 512=>$NOKEY);
+  check_search($func,32,[qw(0 1 1 1 2)],1=>3);
   print "\n";
 }
 
@@ -114,8 +114,8 @@ sub check_asearch {
   my @keys = sort {$a<=>$b} keys %$key2want;
   my $want = @$key2want{@keys};
   my $il   = $code->($v,\@keys,$nbits); #, 0,$#$l);
-  my $istr = h2str($key2want);
-  my $wstr = h2str({map {($keys[$_]=>$il->[$_])} (0..$#keys)});
+  my $istr = h2str({map {($keys[$_]=>$il->[$_])} (0..$#keys)});
+  my $wstr = h2str($key2want);
   my $rc   = ($istr eq $wstr);
   print
     (($rc ? "good (=[$wstr])" : "BAD (want=[$wstr] != got=[$istr])"), "\n");
@@ -130,7 +130,35 @@ foreach my $prefix ("${PKG}::_","${PKG}::XS::") {
   my $l    = [qw(1 2 4 8 16 32 64 128 256)];
   check_asearch("${prefix}vabsearch",    32,$l,{8=>3, 7=>$NOKEY, 0=>$NOKEY, 1=>0, 512=>$NOKEY, 32=>5, 256=>8});
   check_asearch("${prefix}vabsearch_lb", 32,$l,{8=>3, 7=>2,      0=>$NOKEY, 1=>0, 512=>8,      32=>5, 256=>8});
-  check_asearch("${prefix}vabsearch_ub", 32,$l,{8=>3, 7=>3,      0=>0,      1=>0, 512=>9,      32=>5, 256=>8});
+  check_asearch("${prefix}vabsearch_ub", 32,$l,{8=>3, 7=>3,      0=>0,      1=>0, 512=>$NOKEY, 32=>5, 256=>8});
+}
+
+##--------------------------------------------------------------
+## test: vec-wise: (36) +(3*2) = (37..42)
+
+sub check_vvsearch {
+  my ($func,$nbits,$l,$key2want) = @_;
+  print "check_vvsearch:$func(nbits=$nbits,l=[",l2str($l),"],want={",h2str($key2want),"}): ";
+  my $code = eval "\\\&$func";
+  my $v    = makevec($nbits,$l);
+  my @keys = sort {$a<=>$b} keys %$key2want;
+  my $keyv = makevec($nbits,\@keys);
+  my $want = @$key2want{@keys};
+  my $iv   = $code->($v,$keyv,$nbits); #, 0,$#$l);
+  my $istr = h2str($key2want);
+  my $wstr = h2str({map {($keys[$_]=>vec($iv,$_,32))} (0..$#keys)});
+  my $rc   = ($istr eq $wstr);
+  print
+    (($rc ? "good (=[$wstr])" : "BAD (want=[$wstr] != got=[$istr])"), "\n");
+  ok($rc);
+  return $rc;
+}
+
+foreach my $prefix ("${PKG}::_","${PKG}::XS::") {
+  my $l    = [qw(1 2 4 8 16 32 64 128 256)];
+  check_vvsearch("${prefix}vvbsearch",    32,$l,{8=>3, 7=>$NOKEY, 0=>$NOKEY, 1=>0, 512=>$NOKEY, 32=>5, 256=>8});
+  check_vvsearch("${prefix}vvbsearch_lb", 32,$l,{8=>3, 7=>2,      0=>$NOKEY, 1=>0, 512=>8,      32=>5, 256=>8});
+  check_vvsearch("${prefix}vvbsearch_ub", 32,$l,{8=>3, 7=>3,      0=>0,      1=>0, 512=>$NOKEY, 32=>5, 256=>8});
 }
 
 
