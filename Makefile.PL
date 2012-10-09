@@ -62,7 +62,7 @@ sub MY::depend {
 		 .join('',
 		      map {
 			"$_: README.txt\n\n"
-		      } qw(dist create_distdir distdir_am distcheck manicheck))
+		      } qw(dist create_distdir distdir_am distcheck))
 		);
   return $inherited;
 }
