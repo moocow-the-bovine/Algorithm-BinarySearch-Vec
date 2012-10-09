@@ -5,10 +5,10 @@ use ExtUtils::MakeMaker;
 ##----------------------------------------------------------------------
 WriteMakefile
   (
-   NAME		=> 'Algorithm::BinarySearch::Vec::XS',
+   NAME		=> 'Algorithm::BinarySearch::Vec',
    AUTHOR       => 'Bryan Jurish <moocow@cpan.org>',
-   ABSTRACT	=> 'fast binary search functions for vec() vectors',
-   VERSION_FROM	=> 'XS.pm',
+   ABSTRACT	=> 'binary search functions for vec() vectors, with fast XS implementations',
+   VERSION_FROM	=> 'Vec/Version.pm',
 
    ##-- user variables
    #CC           => 'c++',   ##-- your c++ compiler

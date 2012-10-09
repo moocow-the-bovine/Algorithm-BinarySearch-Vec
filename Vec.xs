@@ -12,12 +12,14 @@ typedef unsigned int  uint;
 typedef unsigned char uchar;
 #endif
 
+const uint KEY_NOT_FOUND = (uint)-1;
+
 /*==============================================================================
  * Utils
  */
 
 //--------------------------------------------------------------
-static inline int avbs_cmp(unsigned int a, unsigned int b)
+static inline int absv_cmp(unsigned int a, unsigned int b)
 {
   if      (a<b) return -1;
   else if (a>b) return  1;
@@ -25,7 +27,7 @@ static inline int avbs_cmp(unsigned int a, unsigned int b)
 }
 
 //--------------------------------------------------------------
-static inline uint avbs_vget(const uchar *v, uint i, uint nbits)
+static inline uint absv_vget(const uchar *v, uint i, uint nbits)
 {
   switch (nbits) {
   default:
@@ -39,7 +41,7 @@ static inline uint avbs_vget(const uchar *v, uint i, uint nbits)
 }
 
 //--------------------------------------------------------------
-static inline void avbs_vset(uchar *v, uint i, uint nbits, uint val)
+static inline void absv_vset(uchar *v, uint i, uint nbits, uint val)
 {
   uint b;
   //fprintf(stderr, "DEBUG: vset(nbits=%u, i=%u, val=%u)\n", nbits,i,val);
@@ -55,53 +57,53 @@ static inline void avbs_vset(uchar *v, uint i, uint nbits, uint val)
 }
 
 //--------------------------------------------------------------
-static uint avbs_bsearch_lb(const uchar *v, uint key, uint ilo, uint ihi, uint nbits)
-{
- uint imid;
- while (ihi-ilo > 1) {
-   imid = (ihi+ilo) >> 1;
-   if (avbs_vget(v, imid, nbits) < key) {
-     ilo = imid;
-   } else {
-     ihi = imid;
-   }
- }
- if (avbs_vget(v,ilo,nbits)==key) return ilo;
- if (avbs_vget(v,ihi,nbits)<=key) return ihi;
- return ilo;
-}
-
-//--------------------------------------------------------------
-static uint avbs_bsearch_ub(const uchar *v, uint key, uint ilo, uint ihi, uint nbits)
-{
- uint imid;
- while (ihi-ilo > 1) {
-   imid = (ihi+ilo) >> 1;
-   if (avbs_vget(v, imid, nbits) > key) {
-     ihi = imid;
-   } else {
-     ilo = imid;
-   }
- }
- if (avbs_vget(v,ihi,nbits)==key) return ihi;
- if (avbs_vget(v,ilo,nbits)>=key) return ilo;
- return ihi;
-}
-
-//--------------------------------------------------------------
-static uint avbs_bsearch(const uchar *v, uint key, uint ilo, uint ihi, uint nbits)
+static uint absv_bsearch(const uchar *v, uint key, uint ilo, uint ihi, uint nbits)
 {
   while (ilo < ihi) {
     uint imid = (ilo+ihi) >> 1;
-    if (avbs_vget(v, imid, nbits) < key)
+    if (absv_vget(v, imid, nbits) < key)
       ilo = imid + 1;
     else
       ihi = imid;
   }
-  if ((ilo == ihi) && (avbs_vget(v,ilo,nbits) == key))
+  if ((ilo == ihi) && (absv_vget(v,ilo,nbits) == key))
     return ilo;
   else
-    return (uint)-1;
+    return KEY_NOT_FOUND;
+}
+
+//--------------------------------------------------------------
+static uint absv_bsearch_lb(const uchar *v, uint key, uint ilo, uint ihi, uint nbits)
+{
+ uint imid;
+ while (ihi-ilo > 1) {
+   imid = (ihi+ilo) >> 1;
+   if (absv_vget(v, imid, nbits) < key) {
+     ilo = imid;
+   } else {
+     ihi = imid;
+   }
+ }
+ if (absv_vget(v,ilo,nbits)==key) return ilo;
+ if (absv_vget(v,ihi,nbits)<=key) return ihi;
+ return ilo==0 ? KEY_NOT_FOUND : ilo;
+}
+
+//--------------------------------------------------------------
+static uint absv_bsearch_ub(const uchar *v, uint key, uint ilo, uint ihi, uint nbits)
+{
+ uint imid;
+ while (ihi-ilo > 1) {
+   imid = (ihi+ilo) >> 1;
+   if (absv_vget(v, imid, nbits) > key) {
+     ihi = imid;
+   } else {
+     ilo = imid;
+   }
+ }
+ if (absv_vget(v,ihi,nbits)==key) return ihi;
+ if (absv_vget(v,ilo,nbits)>=key) return ilo;
+ return ihi;
 }
 
 /*==============================================================================
@@ -123,7 +125,7 @@ PREINIT:
   uchar *vp;
 CODE:
  vp = (uchar *)SvPV_nolen(vec);
- RETVAL = avbs_vget(vp, i, nbits);
+ RETVAL = absv_vget(vp, i, nbits);
 OUTPUT:
   RETVAL
 
@@ -134,7 +136,7 @@ PREINIT:
   uchar *vp;
 CODE:
  vp = (uchar *)SvPV_nolen(vec);
- avbs_vset(vp, i, nbits, val);
+ absv_vset(vp, i, nbits, val);
 
 
 ##=====================================================================
@@ -150,9 +152,7 @@ CODE:
  v = SvPV(vec,vlen);
  ilo = items > 3 ? SvUV(ST(3)) : 0;
  ihi = items > 4 ? SvUV(ST(4)) : (vlen*8/nbits);
- RETVAL = avbs_bsearch(v,key,ilo,ihi,nbits);
- if (RETVAL == (uint)-1)
-   XSRETURN_UNDEF;
+ RETVAL = absv_bsearch(v,key,ilo,ihi,nbits);
 OUTPUT:
  RETVAL
 
@@ -166,7 +166,7 @@ CODE:
  v = SvPV(vec,vlen);
  ilo = items > 3 ? SvUV(ST(3)) : 0;
  ihi = items > 4 ? SvUV(ST(4)) : (vlen*8/nbits);
- RETVAL = avbs_bsearch_lb(v,key,ilo,ihi,nbits);
+ RETVAL = absv_bsearch_lb(v,key,ilo,ihi,nbits);
 OUTPUT:
  RETVAL
 
@@ -180,7 +180,7 @@ CODE:
  v = SvPV(vec,vlen);
  ilo = items > 3 ? SvUV(ST(3)) : 0;
  ihi = items > 4 ? SvUV(ST(4)) : (vlen*8/nbits);
- RETVAL = avbs_bsearch_ub(v,key,ilo,ihi,nbits);
+ RETVAL = absv_bsearch_ub(v,key,ilo,ihi,nbits);
 OUTPUT:
  RETVAL
 
@@ -204,8 +204,8 @@ CODE:
  av_extend(RETVAL, n);
  for (i=0; i<=n; ++i) {
    SV   **key   = av_fetch(needle, i, 0);
-   uint   found = avbs_bsearch(v,SvUV(*key),ilo,ihi,nbits);
-   av_store(RETVAL, i, (found == (uint)-1 ? newSV(0) : newSVuv(found)));
+   uint   found = absv_bsearch(v,SvUV(*key),ilo,ihi,nbits);
+   av_store(RETVAL, i, newSVuv(found));
  }
 OUTPUT:
  RETVAL
@@ -226,8 +226,8 @@ CODE:
  av_extend(RETVAL, n);
  for (i=0; i<=n; ++i) {
    SV   **key   = av_fetch(needle, i, 0);
-   uint   found = avbs_bsearch_lb(v,SvUV(*key),ilo,ihi,nbits);
-   av_store(RETVAL, i, (found == (uint)-1 ? newSV(0) : newSVuv(found)));
+   uint   found = absv_bsearch_lb(v,SvUV(*key),ilo,ihi,nbits);
+   av_store(RETVAL, i, newSVuv(found));
  }
 OUTPUT:
  RETVAL
@@ -248,8 +248,8 @@ CODE:
  av_extend(RETVAL, n);
  for (i=0; i<=n; ++i) {
    SV   **key   = av_fetch(needle, i, 0);
-   uint   found = avbs_bsearch_ub(v,SvUV(*key),ilo,ihi,nbits);
-   av_store(RETVAL, i, (found == (uint)-1 ? newSV(0) : newSVuv(found)));
+   uint   found = absv_bsearch_ub(v,SvUV(*key),ilo,ihi,nbits);
+   av_store(RETVAL, i, newSVuv(found));
  }
 OUTPUT:
  RETVAL
