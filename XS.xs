@@ -180,7 +180,7 @@ CODE:
  v = SvPV(vec,vlen);
  ilo = items > 3 ? SvUV(ST(3)) : 0;
  ihi = items > 4 ? SvUV(ST(4)) : (vlen*8/nbits);
- RETVAL = avbs_vsearch_ub(v,key,ilo,ihi,nbits);
+ RETVAL = avbs_bsearch_ub(v,key,ilo,ihi,nbits);
 OUTPUT:
  RETVAL
 

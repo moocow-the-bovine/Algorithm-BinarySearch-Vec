@@ -15,7 +15,7 @@ require XSLoader;
 XSLoader::load('Algorithm::BinarySearch::Vec::XS', $VERSION);
 
 # Preloaded methods go here.
-#require Algorithm::BinarySearch::Vec::Whatever;
+#require Algorithm::BinarySearch::Vec::XS::Whatever;
 
 # Autoload methods go after =cut, and are processed by the autosplit program.
 
@@ -38,15 +38,10 @@ BEGIN {
 }
 
 ##======================================================================
-## Constants
+## ... stuff happens ...
 ##======================================================================
 
 
-##======================================================================
-## Exports: finish
-##======================================================================
-
-
-1;
+1; ##-- be happy
 
 __END__
