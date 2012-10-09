@@ -12,9 +12,10 @@ our $VERSION = '0.01';
 our ($HAVE_XS);
 eval {
   require XSLoader;
-  XSLoader::load('Algorithm::BinarySearch::Vec::XS', $VERSION);
-  $HAVE_XS = 1;
-}
+  $HAVE_XS = XSLoader::load('Algorithm::BinarySearch::Vec', $VERSION);
+} or do {
+  $HAVE_XS = 0;
+};
 
 # Preloaded methods go here.
 #require Algorithm::BinarySearch::Vec::XS::Whatever;
@@ -24,23 +25,24 @@ eval {
 ##======================================================================
 ## Exports
 ##======================================================================
+
+our $KEY_NOT_FOUND = unpack('N',pack('N',-1));
+
 our (%EXPORT_TAGS, @EXPORT_OK, @EXPORT);
 BEGIN {
   %EXPORT_TAGS =
     (
-     std   => [qw( vbsearch  vbsearch_lb  vbsearch_ub),
+     api   => [qw( vbsearch  vbsearch_lb  vbsearch_ub),
 	       qw(vabsearch vabsearch_lb vabsearch_ub),
-	       qw($KEY_NOT_FOUND)
 	      ],
+     const => [qw($KEY_NOT_FOUND)],
      debug => [qw(vget vset)],
     );
-  $EXPORT_TAGS{default} = [@{$EXPORT_TAGS{std}}];
-  $EXPORT_TAGS{all}     = [@{$EXPORT_TAGS{std}}, @{$EXPORT_TAGS{debug}}];
+  $EXPORT_TAGS{all}     = [map {@$_} @EXPORT_TAGS{qw(api const debug)}];
+  $EXPORT_TAGS{default} = [map {@$_} @EXPORT_TAGS{qw(api const)}];
   @EXPORT_OK            = @{$EXPORT_TAGS{all}};
   @EXPORT               = @{$EXPORT_TAGS{default}};
 }
-
-our $KEY_NOT_FOUND = unpack('N',pack('N',-1));
 
 ##======================================================================
 ## API: Search: element-wise
@@ -53,10 +55,10 @@ sub _vbsearch {
   $ilo = 0 if (!defined($ilo));
   $ihi = 8*length($$vr)/$nbits if (!defined($ihi));
   my ($imid);
-  while ($ihi-$ilo > 1) {
+  while ($ilo < $ihi) {
     $imid = ($ihi+$ilo) >> 1;
     if (vec($$vr,$imid,$nbits) < $key) {
-      $ilo = $imid;
+      $ilo = $imid + 1;
     } else {
       $ihi = $imid;
     }
@@ -74,7 +76,7 @@ sub _vbsearch_lb {
   my ($imid);
   while ($ihi-$ilo > 1) {
     $imid = ($ihi+$ilo) >> 1;
-    if (vec($$vr,$imid,$nbits) < key) {
+    if (vec($$vr,$imid,$nbits) < $key) {
       $ilo = $imid;
     } else {
       $ihi = $imid;
@@ -95,14 +97,14 @@ sub _vbsearch_ub {
   my ($imid);
   while ($ihi-$ilo > 1) {
     $imid = ($ihi+$ilo) >> 1;
-    if (vec($$vr,$imid,$nbits) > key) {
+    if (vec($$vr,$imid,$nbits) > $key) {
       $ihi = $imid;
     } else {
       $ilo = $imid;
     }
   }
   return $ihi if (vec($$vr,$ihi,$nbits)==$key);
-  return $ilo if (vec($$vr,$ihi,$nbits)>=$key);
+  return $ilo if (vec($$vr,$ilo,$nbits)>=$key);
   return $ihi;
 }
 
@@ -127,21 +129,22 @@ sub _vabsearch_lb {
 ##--------------------------------------------------------------
 ## \@indices = vabsearch_ub($v,\@keys,$nbits)
 ## \@indices = vabsearch_ub($v,\@keys,$nbits,$ilo,$ihi)
-sub _vabsearch_lb {
+sub _vabsearch_ub {
   return [map {vbsearch_ub($_[0],$_,@_[2..$#_])} @{$_[1]}];
 }
 
 
 ##======================================================================
 ## delegate: attempt to delegate to XS module
-foreach my $func (@{$EXPORT_TAGS{std}}) {
-  no warnings 'redefined';
+foreach my $func (@{$EXPORT_TAGS{api}}) {
+  no warnings 'redefine';
   if ($HAVE_XS) {
-    eval "\*$func = \\&Algorithm::BinarySearch::Vec::$func;";
+    eval "\*$func = \\&Algorithm::BinarySearch::Vec::XS::$func;";
   } else {
     eval "\*$func = \\&_$func;";
   }
 }
+
 
 1; ##-- be happy
 

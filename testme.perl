@@ -2,7 +2,10 @@
 #-*- Mode: CPerl; coding: utf-8 -*-
 
 use lib qw(./blib/lib ./blib/arch);
-use Algorithm::BinarySearch::Vec::XS ':all';
+use Algorithm::BinarySearch::Vec ':all';
+
+our $NOKEY = $KEY_NOT_FOUND;
+print STDERR "Algorithm::BinarySearch::Vec::HAVE_XS = $Algorithm::BinarySearch::Vec::HAVE_XS\n";
 
 BEGIN {
   #binmode(\*STDOUT,':utf8');
@@ -149,8 +152,8 @@ sub check_bsearch {
   print STDERR "check_bsearch(nbits=$nbits,key=$key,l=[",join(' ',@$l),"]): ";
   my $v = makevec($nbits,$l);
   my $i = vbsearch($v,$key,$nbits); #, 0,$#$l);
-  my $istr = defined($i) ? ($i+0) : 'undef';
-  my $wstr = defined($want) ? ($want+0) : 'undef';
+  my $istr = n2str($i);
+  my $wstr = n2str($want);
   my $rc = ($istr eq $wstr);
   print STDERR ($rc ? "ok (=$wstr)" : "NOT ok (want=$wstr != got=$istr)"), "\n";
   return $rc;
@@ -161,9 +164,9 @@ sub test_bsearch {
   my $rc = 1;
   $l = [qw(1 2 4 8 16 32 64 128 256)];
   $rc &&= check_bsearch(32,$l,8, 3);
-  $rc &&= check_bsearch(32,$l,7, undef);
-  $rc &&= check_bsearch(32,$l,0, undef);
-  $rc &&= check_bsearch(32,$l,512, undef);
+  $rc &&= check_bsearch(32,$l,7, $NOKEY);
+  $rc &&= check_bsearch(32,$l,0, $NOKEY);
+  $rc &&= check_bsearch(32,$l,512, $NOKEY);
   $rc &&= check_bsearch(32,[qw(0 1 1 1 2)],1,1);
   die("test_bsearch() failed!\n") if (!$rc);
   print "\n";
@@ -179,8 +182,10 @@ sub check_lb {
   print STDERR "check_lb(nbits=$nbits,key=$key,l=[",join(' ',@$l),"]): ";
   my $v = makevec($nbits,$l);
   my $i = vbsearch_lb($v,$key,$nbits, 0,$#$l);
-  my $rc = ($i==$want);
-  print STDERR ($rc ? "ok (=$want)" : "NOT ok (want=$want != got=$i)"), "\n";
+  my $istr = n2str($i);
+  my $wstr = n2str($want);
+  my $rc = ($istr eq $wstr);
+  print STDERR ($rc ? "ok (=$wstr)" : "NOT ok (want=$wstr != got=$istr)"), "\n";
   return $rc;
 }
 
@@ -189,12 +194,12 @@ sub test_lb {
   $l = [qw(1 2 4 8 16 32 64 128 256)];
   check_lb(32,$l,8, 3);
   check_lb(32,$l,7, 2);
-  check_lb(32,$l,0, 0);
+  check_lb(32,$l,0, $NOKEY);
   check_lb(32,$l,512, $#$l);
   check_lb(32,[qw(0 1 1 1 2)],1,1);
   print "\n";
 }
-#test_lb();
+test_lb();
 
 ##--------------------------------------------------------------
 ## test: upper_bound
@@ -219,15 +224,20 @@ sub test_ub {
   check_ub(32,[qw(0 1 1 1 2)],1,3);
   print "\n";
 }
-#test_ub();
+test_ub();
 
 
 ##--------------------------------------------------------------
 ## test: bsearch: array
 
+## $str = n2str($n)
+sub n2str {
+  return !defined($_[0]) ? 'undef' : ($_[0]==$NOKEY ? 'NOKEY' : ($_[0]+0));
+}
+
 ## $str = nl2str(\@list)
 sub nl2str {
-  return join(' ', map {defined($_) ? ($_+0) : 'undef'} @{$_[0]});
+  return join(' ', map {n2str($_)} @{$_[0]});
 }
 
 sub check_asearch {
@@ -250,9 +260,9 @@ sub test_absearch {
   my $rc = 1;
   $l = [qw(1 2 4 8 16 32 64 128 256)];
   my $keys = [qw(8 7 0 1 512 32 256)];
-  $rc &&= check_asearch('vabsearch',    32,$l,$keys,[3,undef,undef,0,undef,5,8]);
-  $rc &&= check_asearch('vabsearch_lb', 32,$l,$keys,[3,   2,     0,0,    8,5,8]);
-  $rc &&= check_asearch('vabsearch_ub', 32,$l,$keys,[3,   3,     0,0,    9,5,8]);
+  $rc &&= check_asearch('vabsearch',    32,$l,$keys,[3,$NOKEY,$NOKEY,0,$NOKEY,5,8]);
+  $rc &&= check_asearch('vabsearch_lb', 32,$l,$keys,[3,     2,     0,0,     8,5,8]);
+  $rc &&= check_asearch('vabsearch_ub', 32,$l,$keys,[3,     3,     0,0,     9,5,8]);
   die("test_absearch() failed!\n") if (!$rc);
   print "\n";
 }

@@ -9,8 +9,8 @@ do "$TEST_DIR/common.plt"
   or die("could not load $TEST_DIR/common.plt");
 
 
-@modules = qw(Algorithm::BinarySearch::Vec::XS Algorithm::BinarySearch::Vec);
-plan(test => scalar(@modules));
+@modules = qw(Algorithm::BinarySearch::Vec);
+plan(test => scalar(@modules)+1);
 
 # 1--N: load submodules (1 subtest/module)
 foreach $module (@modules) {
@@ -18,6 +18,9 @@ foreach $module (@modules) {
   ok(eval("require $module;"));
   die("require $module failed: $@") if ($@);
 }
+
+use vars qw($Algorithm::BinarySearch::Vec::HAVE_XS);
+ok($Algorithm::BinarySearch::Vec::HAVE_XS);
 
 print "\n";
 # end of t/01_ini.t

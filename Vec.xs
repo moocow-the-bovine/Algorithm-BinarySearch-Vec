@@ -110,7 +110,7 @@ static uint absv_bsearch_ub(const uchar *v, uint key, uint ilo, uint ihi, uint n
  * XS Guts
  */
 
-MODULE = Algorithm::BinarySearch::Vec::XS    PACKAGE = Algorithm::BinarySearch::Vec::XS
+MODULE = Algorithm::BinarySearch::Vec    PACKAGE = Algorithm::BinarySearch::Vec::XS
 
 PROTOTYPES: ENABLE
 
