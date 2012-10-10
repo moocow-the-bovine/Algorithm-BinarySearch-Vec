@@ -8,7 +8,7 @@
 typedef unsigned char uchar;
 #endif
 
-const uint KEY_NOT_FOUND = (uint)-1;
+const U32 KEY_NOT_FOUND = 0xffffffff;
 
 /*==============================================================================
  * Utils
@@ -71,7 +71,7 @@ static U32 absv_bsearch(const uchar *v, U32 key, U32 ilo, U32 ihi, U32 nbits)
 //--------------------------------------------------------------
 static U32 absv_bsearch_lb(const uchar *v, U32 key, U32 ilo, U32 ihi, U32 nbits)
 {
- U32 imid, imin=ilo;
+ U32 imid, imin=ilo, imax=ihi;
  while (ihi-ilo > 1) {
    imid = (ihi+ilo) >> 1;
    if (absv_vget(v, imid, nbits) < key) {
@@ -80,9 +80,9 @@ static U32 absv_bsearch_lb(const uchar *v, U32 key, U32 ilo, U32 ihi, U32 nbits)
      ihi = imid;
    }
  }
- if (absv_vget(v,ilo,nbits)==key) return ilo;
- if (absv_vget(v,ihi,nbits)<=key) return ihi;
- return ilo==imin ? KEY_NOT_FOUND : ilo;
+ if (              absv_vget(v,ilo,nbits)==key) return ilo;
+ if (ihi < imax && absv_vget(v,ihi,nbits)==key) return ihi;
+ return ilo<=imin ? KEY_NOT_FOUND : ilo;
 }
 
 //--------------------------------------------------------------
@@ -97,8 +97,8 @@ static U32 absv_bsearch_ub(const uchar *v, U32 key, U32 ilo, U32 ihi, U32 nbits)
      ilo = imid;
    }
  }
- if (absv_vget(v,ihi,nbits)==key) return ihi;
- if (absv_vget(v,ilo,nbits)>=key) return ilo;
+ if (ihi<imax && absv_vget(v,ihi,nbits)==key) return ihi;
+ if (            absv_vget(v,ilo,nbits)>=key) return ilo;
  return ihi>=imax ? KEY_NOT_FOUND : ihi;
 }
 

@@ -50,7 +50,11 @@ sub h2str {
 sub check_search {
   my ($func,$nbits,$l,$key,$want) = @_;
   print "check_search:$func(nbits=$nbits,key=$key,l=[",l2str($l),"]): ";
-  my $code = eval "\\\&$func";
+  my $code = (main->can($func)
+	      || $PKG->can($func)
+	      || "${PKG}::XS"->can($func)
+	      || $PKG->can("_$func")
+	      || die("check_search:${func}: could not find function '$func'"));
   my $v    = makevec($nbits,$l);
   my $i    = $code->($v,$key,$nbits); #, 0,$#$l);
   my $istr = n2str($i);
@@ -188,8 +192,8 @@ sub check_bsearch {
 
 sub test_bsearch {
   my ($l,$i);
-  my $rc = 1;
   $l = [qw(1 2 4 8 16 32 64 128 256)];
+  my $rc = 1;
   $rc &&= check_bsearch(32,$l, 8=>3);
   $rc &&= check_bsearch(32,$l, 7=>$NOKEY);
   $rc &&= check_bsearch(32,$l, 0=>$NOKEY);
@@ -198,7 +202,7 @@ sub test_bsearch {
   die("test_bsearch() failed!\n") if (!$rc);
   print "\n";
 }
-#test_bsearch();
+test_bsearch();
 
 
 ##--------------------------------------------------------------
@@ -211,14 +215,16 @@ sub check_lb {
 sub test_lb {
   my ($l,$i);
   $l = [qw(1 2 4 8 16 32 64 128 256)];
-  check_lb(32,$l, 8=>3);
-  check_lb(32,$l, 7=>2);
-  check_lb(32,$l, 0=>$NOKEY);
-  check_lb(32,$l, 512=>$#$l);
-  check_lb(32,[qw(0 1 1 1 2)], 1=>1);
+  my $rc = 1;
+  $rc &&= check_lb(32,$l, 8=>3);
+  $rc &&= check_lb(32,$l, 7=>2);
+  $rc &&= check_lb(32,$l, 0=>$NOKEY);
+  $rc &&= check_lb(32,$l, 512=>$#$l);
+  $rc &&= check_lb(32,[qw(0 1 1 1 2)], 1=>1);
+  die("test_lb() failed!\n") if (!$rc);
   print "\n";
 }
-#test_lb();
+test_lb();
 
 ##--------------------------------------------------------------
 ## test: upper_bound
@@ -230,14 +236,16 @@ sub check_ub {
 sub test_ub {
   my ($l,$i);
   $l = [qw(1 2 4 8 16 32 64 128 256)];
-  check_ub(32,$l, 8=>3);
-  check_ub(32,$l, 7=>3);
-  check_ub(32,$l, 0=>0);
-  check_ub(32,$l, 512=>$NOKEY);
-  check_ub(32,[qw(0 1 1 1 2)], 1=>3);
+  my $rc = 1;
+  $rc &&= check_ub(32,$l, 8=>3);
+  $rc &&= check_ub(32,$l, 7=>3);
+  $rc &&= check_ub(32,$l, 0=>0);
+  $rc &&= check_ub(32,$l, 512=>$NOKEY);
+  $rc &&= check_ub(32,[qw(0 1 1 1 2)], 1=>3);
+  die("test_ub() failed!\n") if (!$rc);
   print "\n";
 }
-#test_ub();
+test_ub();
 
 
 ##--------------------------------------------------------------
@@ -250,7 +258,8 @@ sub check_asearch {
   my $code = (main->can($func)
 	      || $PKG->can($func)
 	      || "${PKG}::XS"->can($func)
-	      || $PKG->can("_$func"));
+	      || $PKG->can("_$func")
+	      || die("check_asearch:${func}: could not find function '$func'"));
   my $v    = makevec($nbits,$l);
   my @keys = sort {$a<=>$b} keys %$key2want;
   my $want = @$key2want{@keys};
@@ -258,8 +267,10 @@ sub check_asearch {
   my $wstr = h2str($key2want);
   my $istr = h2str({map {($keys[$_]=>$il->[$_])} (0..$#keys)});
   my $rc   = ($istr eq $wstr);
-  print
-    (($rc ? "good (=[$wstr])" : "BAD (want=[$wstr] != got=[$istr])"), "\n");
+  print 
+    (($rc ? "good\n" : ("BAD:\n",
+			"> BAD: want=[$wstr] !=\n",
+			"> BAD:  got=[$istr]\n")));
   return $rc;
 }
 
@@ -268,13 +279,13 @@ sub test_absearch {
   my $rc = 1;
   $l = [qw(1 2 4 8 16 32 64 128 256)];
   my $keys = [qw(8 7 0 1 512 32 256)];
-  $rc &&= check_asearch('_vabsearch',    32,$l, {8=>3, 7=>$NOKEY, 0=>$NOKEY, 1=>0, 512=>$NOKEY, 32=>5, 256=>8});
-  $rc &&= check_asearch('_vabsearch_lb', 32,$l, {8=>3, 7=>2,      0=>$NOKEY, 1=>0, 512=>8,      32=>5, 256=>8});
-  $rc &&= check_asearch('_vabsearch_ub', 32,$l, {8=>3, 7=>3,      0=>0,      1=>0, 512=>$NOKEY, 32=>5, 256=>8});
+  $rc &&= check_asearch('vabsearch',    32,$l, {8=>3, 7=>$NOKEY, 0=>$NOKEY, 1=>0, 512=>$NOKEY, 32=>5, 256=>8});
+  $rc &&= check_asearch('vabsearch_lb', 32,$l, {8=>3, 7=>2,      0=>$NOKEY, 1=>0, 512=>8,      32=>5, 256=>8});
+  $rc &&= check_asearch('vabsearch_ub', 32,$l, {8=>3, 7=>3,      0=>0,      1=>0, 512=>$NOKEY, 32=>5, 256=>8});
   die("test_absearch() failed!\n") if (!$rc);
   print "\n";
 }
-#test_absearch(); exit 0;
+test_absearch(); exit 0;
 
 ##--------------------------------------------------------------
 ## test: bsearch: vec-wise
@@ -285,7 +296,8 @@ sub check_vvsearch {
   my $code = (main->can($func)
 	      || $PKG->can($func)
 	      || "${PKG}::XS"->can($func)
-	      || $PKG->can("_$func"));
+	      || $PKG->can("_$func")
+	      || die("check_vvsearch:${func}: could not find function '$func'"));
   my $v    = makevec($nbits,$l);
   my @keys = sort {$a<=>$b} keys %$key2want;
   my $keyv = makevec($nbits,\@keys);
@@ -294,8 +306,10 @@ sub check_vvsearch {
   my $istr = h2str($key2want);
   my $wstr = h2str({map {($keys[$_]=>vec($iv,$_,32))} (0..$#keys)});
   my $rc   = ($istr eq $wstr);
-  print
-    (($rc ? "good (=[$wstr])" : "BAD (want=[$wstr] != got=[$istr])"), "\n");
+  print 
+    (($rc ? "good\n" : ("BAD:\n",
+			"> BAD: want=[$wstr] !=\n",
+			"> BAD:  got=[$istr]\n")));
   return $rc;
 }
 

@@ -7,7 +7,7 @@ use strict;
 use bytes;
 
 our @ISA = qw(Exporter);
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 our ($HAVE_XS);
 eval {
@@ -90,8 +90,7 @@ sub _vbsearch_lb {
   my ($vr,$key,$nbits,$ilo,$ihi) = (\$_[0],@_[1..$#_]);
   $ilo = 0 if (!defined($ilo));
   $ihi = 8*length($$vr)/$nbits if (!defined($ihi));
-  my $imin = $ilo;
-  my ($imid);
+  my ($imin,$imax,$imid) = ($ilo,$ihi);
   while ($ihi-$ilo > 1) {
     $imid = ($ihi+$ilo) >> 1;
     if (vec($$vr,$imid,$nbits) < $key) {
@@ -100,9 +99,9 @@ sub _vbsearch_lb {
       $ihi = $imid;
     }
   }
-  return $ilo if (vec($$vr,$ilo,$nbits)==$key);
-  return $ihi if (vec($$vr,$ihi,$nbits)==$key);
-  return $ilo==$imin ? $KEY_NOT_FOUND : $ilo;
+  return $ilo if (                vec($$vr,$ilo,$nbits)==$key);
+  return $ihi if ($ihi < $imax && vec($$vr,$ihi,$nbits)==$key);
+  return $ilo<=$imin ? $KEY_NOT_FOUND : $ilo;
 }
 
 ##--------------------------------------------------------------
@@ -112,8 +111,7 @@ sub _vbsearch_ub {
   my ($vr,$key,$nbits,$ilo,$ihi) = (\$_[0],@_[1..$#_]);
   $ilo = 0 if (!defined($ilo));
   $ihi = 8*length($$vr)/$nbits if (!defined($ihi));
-  my $imax = $ihi;
-  my ($imid);
+  my ($imin,$imax,$imid) = ($ilo,$ihi);
   while ($ihi-$ilo > 1) {
     $imid = ($ihi+$ilo) >> 1;
     if (vec($$vr,$imid,$nbits) > $key) {
@@ -122,8 +120,8 @@ sub _vbsearch_ub {
       $ilo = $imid;
     }
   }
-  return $ihi if (vec($$vr,$ihi,$nbits)==$key);
-  return $ilo if (vec($$vr,$ilo,$nbits)>=$key);
+  return $ihi if ($ihi < $imax && vec($$vr,$ihi,$nbits)==$key);
+  return $ilo if (                vec($$vr,$ilo,$nbits)>=$key);
   return $ihi>=$imax ? $KEY_NOT_FOUND : $ihi;
 }
 
