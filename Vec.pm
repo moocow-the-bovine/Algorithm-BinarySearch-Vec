@@ -258,7 +258,7 @@ Exports all API functions (default).
 
 =item :const
 
-Exports constant(s):
+Exports the following constant(s):
 
 =over 4
 
@@ -287,7 +287,9 @@ Exports everything available.
 
 =head2 Search: element-wise
 
-=head3 vbsearch($v,$key,$nbits,?$ilo,?$ihi)
+=over 4
+
+=item vbsearch($v,$key,$nbits,?$ilo,?$ihi)
 
 Binary search for $key in the vec()-style vector $v, which contains elements
 of $nbits bits each, sorted in ascending order.  $ilo and $ihi if specified are
@@ -297,49 +299,64 @@ Returns the index $i of an element in $v matching $key (C<vec($v,$i,$nbits)==$ke
 with ($ilo E<lt>= $i E<lt> $ihi)),
 or $KEY_NOT_FOUND if no such element exists.
 
-=head3 vbsearch_lb($v,$key,$nbits,?$ilo,?$ihi)
+=item vbsearch_lb($v,$key,$nbits,?$ilo,?$ihi)
 
 Binary search for the lower-bound of $key in the vec()-style vector $v.
 Arguments are as for L<vbsearch()|vbsearch>.
 
-Returns the least index $i with C<vec($v,$i,$nbits) == $key> if it exists,
-otherwise returns the greatest index $i
-with C<vec($v,$i,$nbits) E<lt> $key>,
-or $KEY_NOT_FOUND if no such $i exists (i.e. if vec($v,0,$nbits) E<gt> $key).
+Returns the unique index $i such that
+C<vec($v,$i,$nbits) E<lt>= $key>,
+C<vec($v,$j,$nbits) E<lt> $key> for all $j with $ilo E<lt>= $j E<lt> $i,
+and
+C<vec($v,$k,$nbits) E<gt>= $key> for all $k with $i E<lt> $k E<lt> $ihi,
+or $KEY_NOT_FOUND if no such $i exists (i.e. if C<vec($v,$ilo,$nbits) E<gt> $key>).
+In other words,
+returns the least index of a match for $key in $v whenever a match exists,
+otherwise the greatest index whose value in $v is strictly less than $key if that exists,
+and $KEY_NOT_FOUND if all values in $v are strictly greater than $key.
 
 This is equivalent to (but usually much faster than):
 
- return $KEY_NOT_FOUND if (vec($v,0,$nbits)>$key);
- for (my $i=0; $i < $ihi; $i++) {
-   return $i-1 if (vec($v,$i,$nbits) >  $key)
-   return $i   if (vec($v,$i,$nbits) == $key)
+ return $KEY_NOT_FOUND if (vec($v,$ilo,$nbits) > $key);
+ for (my $i=$ilo; $i < $ihi; $i++) {
+   return $i   if (vec($v,$i,$nbits) == $key);
+   return $i-1 if (vec($v,$i,$nbits) >  $key);
  }
  return ($ihi-1);
 
-Note that the semantics of this function differ somewhat from
+Note that the semantics of this function differ substantially from
 the C++ STL function lower_bound().
 
 
-=head3 vbsearch_ub($v,$key,$nbits,?$ilo,?$ihi)
+=item vbsearch_ub($v,$key,$nbits,?$ilo,?$ihi)
 
 Binary search for the upper-bound of $key in the vec()-style vector $v.
 Arguments are as for L<vbsearch()|vbsearch>.
 
-Returns the greatest index $i with C<vec($v,$i,$nbits) == $key> if it exists,
-otherwise returns the least index $i
-with C<vec($v,$i,$nbits) E<gt> $key>,
-or $ihi if no such $i exists (i.e. if vec($v,$ihi-1,$nbits) E<lt> $key).
+Returns the unique index $i such that
+C<vec($v,$i,$nbits) E<gt>= $key>,
+C<vec($v,$j,$nbits) E<gt> $key> for all $j with $i E<lt> $j E<lt> $ihi,
+and
+C<vec($v,$k,$nbits) E<lt>= $key> for all $k with $ilo E<lt>= $k E<lt> $i,
+or $KEY_NOT_FOUND if no such $i exists (i.e. if C<vec($v,$ilo,$nbits) E<gt> $key>).
+In other words,
+returns the greatest index of a match for $key in $v whenever a match exists,
+otherwise the least index whose value in $v is strictly greater than $key if that exists,
+and $KEY_NOT_FOUND if all values in $v are strictly less than $key.
 
 This is equivalent to (but usually much faster than):
 
+ return $KEY_NOT_FOUND if (vec($v,$ihi-1,$nbits) < $key);
  for ($i=$ihi-1; $i >= 0; $i--) {
-   return $i+1 if (vec($v,$i,$nbits) <  $key)
    return $i   if (vec($v,$i,$nbits) == $key)
+   return $i+1 if (vec($v,$i,$nbits) <  $key)
  }
- return $ihi;
+ return $ilo;
 
-Note that the semantics of this function differ somewhat from
+Note that the semantics of this function differ substantially from
 the C++ STL function upper_bound().
+
+=back
 
 =cut
 
@@ -349,7 +366,9 @@ the C++ STL function upper_bound().
 
 =head2 Search: array-wise
 
-=head3 vabsearch($v,\@keys,$nbits,?$ilo,?$ihi)
+=over 4
+
+=item vabsearch($v,\@keys,$nbits,?$ilo,?$ihi)
 
 Binary search for each value in the ARRAY-ref \@keys in the vec()-style vector $v.
 Other arguments are as for L<vbsearch()|vbsearch>.
@@ -359,7 +378,7 @@ This is equivalent to (but usually much faster than):
  $indices = [map {vbsearch($v,$_,$nbits,$ilo,$ihi)} @keys];
 
 
-=head3 vabsearch_lb($v,\@keys,$nbits,?$ilo,?$ihi)
+=item vabsearch_lb($v,\@keys,$nbits,?$ilo,?$ihi)
 
 Binary search for the lower-bound of each value in the ARRAY-ref \@keys in the vec()-style vector $v.
 Other arguments are as for L<vbsearch()|vbsearch>.
@@ -368,7 +387,7 @@ This is equivalent to (but usually much faster than):
 
  $indices = [map {vbsearch_lb($v,$_,$nbits,$ilo,$ihi)} @keys];
 
-=head3 vabsearch_ub($v,\@keys,$nbits,?$ilo,?$ihi)
+=item vabsearch_ub($v,\@keys,$nbits,?$ilo,?$ihi)
 
 Binary search for the upper-bound of each value in the ARRAY-ref \@keys in the vec()-style vector $v.
 Other arguments are as for L<vbsearch()|vbsearch>.
@@ -376,6 +395,8 @@ Returns an ARRAY-ref of indices.
 This is equivalent to (but usually much faster than):
 
  $indices = [map {vbsearch_ub($v,$_,$nbits,$ilo,$ihi)} @keys];
+
+=back
 
 =cut
 
@@ -385,7 +406,9 @@ This is equivalent to (but usually much faster than):
 
 =head2 Search: vec-wise
 
-=head3 vvbsearch($v,$keyvec,$nbits,?$ilo,?$ihi)
+=over 4
+
+=item vvbsearch($v,$keyvec,$nbits,?$ilo,?$ihi)
 
 Binary search for each key in the key-vector $keyvec in the "haystack"-vector $v.
 Other arguments are as for L<vbsearch()|vbsearch>.
@@ -394,14 +417,7 @@ This is equivalent to:
 
  $ixvec = pack('N*', @{vabsearch($v,vec2array($keyvec,$nbits),$ilo,$ihi)});
 
-where:
-
- sub vec2array {
-   my ($vec,$nbits) = @_;
-   return [map {vec($vec,$_,$nbits)} (0..(length($vec)*8/$nbits-1))];
- }
-
-=head3 vabsearch_lb($v,$keyvec,$nbits,?$ilo,?$ihi)
+=item vabsearch_lb($v,$keyvec,$nbits,?$ilo,?$ihi)
 
 Binary lower-bound search for each key in the key-vector $keyvec in the "haystack"-vector $v.
 Other arguments are as for L<vbsearch()|vbsearch>.
@@ -410,7 +426,7 @@ This is equivalent to:
 
  $ixvec = pack('N*', @{vabsearch_lb($v,vec2array($keyvec,$nbits),$ilo,$ihi)});
 
-=head3 vabsearch_ub($v,$keyvec,$nbits,?$ilo,?$ihi)
+=item vabsearch_ub($v,$keyvec,$nbits,?$ilo,?$ihi)
 
 Binary upper-bound search for each key in the key-vector $keyvec in the "haystack"-vector $v.
 Other arguments are as for L<vbsearch()|vbsearch>.
@@ -418,6 +434,34 @@ Returns a vec()-vector of 32-bit indices.
 This is equivalent to:
 
  $ixvec = pack('N*', @{vabsearch_ub($v,vec2array($keyvec,$nbits),$ilo,$ihi)});
+
+=back
+
+=cut
+
+##======================================================================
+## Debugging
+=pod
+
+=head2 Debugging and Miscellaneous
+
+=over 4
+
+=item vget($vec,$i,$nbits)
+
+Debugging XS-wrapper equivalent to C<vec($vec,$i,$nbits)>.
+
+=item vset($vec,$i,$nbits,$newval)
+
+Debugging XS-wrapper equivalent to C<vec($vec,$i,$nbits)=$newval>.
+
+=item vec2array($vec,$nbits)
+
+Debugging utility, equivalent to
+
+ [map {vec($vec,$_,$nbits)} (0..(length($vec)*8/$nbits-1))]
+
+=back
 
 =cut
 
