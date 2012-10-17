@@ -7,7 +7,7 @@ use strict;
 use bytes;
 
 our @ISA = qw(Exporter);
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 our ($HAVE_XS);
 eval {
@@ -101,7 +101,8 @@ sub _vbsearch_lb {
   }
   return $ilo if (                vec($$vr,$ilo,$nbits)==$key);
   return $ihi if ($ihi < $imax && vec($$vr,$ihi,$nbits)==$key);
-  return $ilo<=$imin ? $KEY_NOT_FOUND : $ilo;
+  return $ilo if ($ilo > $imin || vec($$vr,$ilo,$nbits) <$key);
+  return $KEY_NOT_FOUND;
 }
 
 ##--------------------------------------------------------------
@@ -302,11 +303,10 @@ or $KEY_NOT_FOUND if no such element exists.
 Binary search for the lower-bound of $key in the vec()-style vector $v.
 Arguments are as for L<vbsearch()|vbsearch>.
 
-Returns the unique index $i such that
-C<vec($v,$i,$nbits) E<lt>= $key>,
-C<vec($v,$j,$nbits) E<lt> $key> for all $j with $ilo E<lt>= $j E<lt> $i,
+Returns the maximum index $i such that
+C<vec($v,$i,$nbits) E<lt>= $key>
 and
-C<vec($v,$k,$nbits) E<gt>= $key> for all $k with $i E<lt> $k E<lt> $ihi,
+C<vec($v,$j,$nbits) E<lt> $key> for all $j with $ilo E<lt>= $j E<lt> $i,
 or $KEY_NOT_FOUND if no such $i exists (i.e. if C<vec($v,$ilo,$nbits) E<gt> $key>).
 In other words,
 returns the least index of a match for $key in $v whenever a match exists,
@@ -331,12 +331,11 @@ the C++ STL function lower_bound().
 Binary search for the upper-bound of $key in the vec()-style vector $v.
 Arguments are as for L<vbsearch()|vbsearch>.
 
-Returns the unique index $i such that
-C<vec($v,$i,$nbits) E<gt>= $key>,
-C<vec($v,$j,$nbits) E<gt> $key> for all $j with $i E<lt> $j E<lt> $ihi,
+Returns the minimum index $i such that
+C<vec($v,$i,$nbits) E<gt>= $key>
 and
-C<vec($v,$k,$nbits) E<lt>= $key> for all $k with $ilo E<lt>= $k E<lt> $i,
-or $KEY_NOT_FOUND if no such $i exists (i.e. if C<vec($v,$ilo,$nbits) E<gt> $key>).
+C<vec($v,$j,$nbits) E<gt> $key> for all $j with $i E<lt> $j E<lt> $ihi,
+or $KEY_NOT_FOUND if no such $i exists (i.e. if C<vec($v,$ihi-1,$nbits) E<lt> $key>).
 In other words,
 returns the greatest index of a match for $key in $v whenever a match exists,
 otherwise the least index whose value in $v is strictly greater than $key if that exists,
@@ -411,27 +410,27 @@ This is equivalent to (but usually much faster than):
 Binary search for each key in the key-vector $keyvec in the "haystack"-vector $v.
 Other arguments are as for L<vbsearch()|vbsearch>.
 Returns a vec()-vector of 32-bit indices.
-This is equivalent to:
+This is equivalent to (but usually faster than):
 
- $ixvec = pack('N*', @{vabsearch($v,vec2array($keyvec,$nbits),$ilo,$ihi)});
+ $ixvec = pack('N*', @{vabsearch($v,vec2array($keyvec,$nbits),$nbits,$ilo,$ihi)});
 
-=item vabsearch_lb($v,$keyvec,$nbits,?$ilo,?$ihi)
+=item vvbsearch_lb($v,$keyvec,$nbits,?$ilo,?$ihi)
 
 Binary lower-bound search for each key in the key-vector $keyvec in the "haystack"-vector $v.
 Other arguments are as for L<vbsearch()|vbsearch>.
 Returns a vec()-vector of 32-bit indices.
-This is equivalent to:
+This is equivalent to (but usually faster than):
 
- $ixvec = pack('N*', @{vabsearch_lb($v,vec2array($keyvec,$nbits),$ilo,$ihi)});
+ $ixvec = pack('N*', @{vabsearch_lb($v,vec2array($keyvec,$nbits),$nbits,$ilo,$ihi)});
 
-=item vabsearch_ub($v,$keyvec,$nbits,?$ilo,?$ihi)
+=item vvbsearch_ub($v,$keyvec,$nbits,?$ilo,?$ihi)
 
 Binary upper-bound search for each key in the key-vector $keyvec in the "haystack"-vector $v.
 Other arguments are as for L<vbsearch()|vbsearch>.
 Returns a vec()-vector of 32-bit indices.
-This is equivalent to:
+This is equivalent to (but usually faster than):
 
- $ixvec = pack('N*', @{vabsearch_ub($v,vec2array($keyvec,$nbits),$ilo,$ihi)});
+ $ixvec = pack('N*', @{vabsearch_ub($v,vec2array($keyvec,$nbits),$nbits,$ilo,$ihi)});
 
 =back
 

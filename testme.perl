@@ -224,7 +224,28 @@ sub test_lb {
   die("test_lb() failed!\n") if (!$rc);
   print "\n";
 }
-test_lb();
+#test_lb();
+
+##-- test: lb: sx.vec
+sub test_lb_sx {
+  local $/=undef;
+  open(my $fh, "<:raw", "sx.vec") or die("$0: could not open sx.vec: $!");
+  my $sxv = <$fh>;
+  close $fh;
+
+  ##-- check lb
+  my $func = Algorithm::BinarySearch::Vec->can('_vbsearch_lb');
+  my ($lb);
+  #$lb = $func->($sxv,4576,32);
+  #die("BAD: sx (want=0; got=$lb)") if ( $lb != 0 );
+
+  my $sxv0 = substr($sxv,0,16);
+  $lb = $func->($sxv0,4576,32);
+  die("BAD: sx (want=0; got=$lb)!") if ( $lb != 0 );
+}
+test_lb_sx();
+
+
 
 ##--------------------------------------------------------------
 ## test: upper_bound

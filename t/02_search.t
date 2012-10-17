@@ -12,7 +12,7 @@ my $PKG   = 'Algorithm::BinarySearch::Vec';
 do "$TEST_DIR/common.plt"
   or die("could not load $TEST_DIR/common.plt");
 
-plan(test => 42);
+plan(test => 46);
 
 ##--------------------------------------------------------------
 ## utils
@@ -80,7 +80,7 @@ foreach my $func ("${PKG}::_vbsearch", "${PKG}::XS::vbsearch") {
 }
 
 ##--------------------------------------------------------------
-## test: element-wise: bsearch_lb: (10) +(5*2) = (11..20)
+## test: element-wise: bsearch_lb: (10) +(6*2) = (11..22)
 foreach my $func ("${PKG}::_vbsearch_lb", "${PKG}::XS::vbsearch_lb") {
   my $l = [qw(1 2 4 8 16 32 64 128 256)];
   check_search($func,32,$l, 8=>3);
@@ -88,11 +88,12 @@ foreach my $func ("${PKG}::_vbsearch_lb", "${PKG}::XS::vbsearch_lb") {
   check_search($func,32,$l, 0=>$NOKEY);
   check_search($func,32,$l, 512=>8);
   check_search($func,32,[qw(0 1 1 1 2)],1=>1);
+  check_search($func,32,[qw(4572 4591 4651 4723)], 4576=>0);  ##-- sx search
   print "\n";
 }
 
 ##--------------------------------------------------------------
-## test: element-wise: bsearch_ub: (20) +(5*2) = (21..30)
+## test: element-wise: bsearch_ub: (22) +(6*2) = (23..34)
 foreach my $func ("${PKG}::_vbsearch_ub", "${PKG}::XS::vbsearch_ub") {
   my $l = [qw(1 2 4 8 16 32 64 128 256)];
   check_search($func,32,$l, 8=>3);
@@ -100,6 +101,7 @@ foreach my $func ("${PKG}::_vbsearch_ub", "${PKG}::XS::vbsearch_ub") {
   check_search($func,32,$l, 0=>0);
   check_search($func,32,$l, 512=>$NOKEY);
   check_search($func,32,[qw(0 1 1 1 2)],1=>3);
+  check_search($func,32,[qw(4572 4591 4651 4723)], 4576=>1);  ##-- sx search
   print "\n";
 }
 
@@ -124,7 +126,7 @@ sub check_asearch {
 }
 
 ##--------------------------------------------------------------
-## test: array-wise: (30) +(3*2) = (31..36)
+## test: array-wise: (34) +(3*2) = (35..40)
 
 foreach my $prefix ("${PKG}::_","${PKG}::XS::") {
   my $l    = [qw(1 2 4 8 16 32 64 128 256)];
@@ -134,7 +136,7 @@ foreach my $prefix ("${PKG}::_","${PKG}::XS::") {
 }
 
 ##--------------------------------------------------------------
-## test: vec-wise: (36) +(3*2) = (37..42)
+## test: vec-wise: (40) +(3*2) = (41..46)
 
 sub check_vvsearch {
   my ($func,$nbits,$l,$key2want) = @_;

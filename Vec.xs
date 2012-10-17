@@ -82,7 +82,8 @@ static U32 absv_bsearch_lb(const uchar *v, U32 key, U32 ilo, U32 ihi, U32 nbits)
  }
  if (              absv_vget(v,ilo,nbits)==key) return ilo;
  if (ihi < imax && absv_vget(v,ihi,nbits)==key) return ihi;
- return ilo<=imin ? KEY_NOT_FOUND : ilo;
+ if (ilo > imin || absv_vget(v,ilo,nbits) <key) return ilo;
+ return KEY_NOT_FOUND;
 }
 
 //--------------------------------------------------------------
