@@ -35,6 +35,7 @@ WriteMakefile
    #TYPEMAPS     => ['perlobject.map', 'typemap'],
 
    ##-- prerequisites
+   #MIN_PERL_VERSION => '5.8.0', ##-- perl 5.6 chokes with "Can't declare another package's variables at t/01_ini.t line 22."
    PREREQ_PM    => {
 		    #'Module' => $version,
 		   },

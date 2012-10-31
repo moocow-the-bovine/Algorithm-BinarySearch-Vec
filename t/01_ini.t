@@ -19,7 +19,7 @@ foreach $module (@modules) {
   die("require $module failed: $@") if ($@);
 }
 
-use vars qw($Algorithm::BinarySearch::Vec::HAVE_XS);
+no warnings 'once';
 ok($Algorithm::BinarySearch::Vec::HAVE_XS);
 
 print "\n";

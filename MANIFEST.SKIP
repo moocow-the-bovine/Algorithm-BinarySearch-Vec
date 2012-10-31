@@ -9,3 +9,5 @@ testme\.perl
 \bpm_to_blib\b
 README\.rpod
 ~$
+\.tar\.gz$
+\.vec$

@@ -1,0 +1,26 @@
+Revision history for Perl module Algorithm::BinarySearch::Vec
+
+v0.05 [2012-10-31 pending]  moocow
+	* added Changes (fixes RT #80502)
+	* tweaked 'use vars' line in t/01_ini.t (perl 5.6.2 choked)
+	  - see http://www.cpantesters.org/cpan/report/67845932-1927-11e2-8c89-c5fec1a37597
+
+v0.04 2012-10-17  moocow
+	* fixed vXbsearch_lb() for ilo==imin with v[ilo]<key
+	* added test for ilo==imin with v[ilo]<key
+	* updated docs
+
+v0.03 2012-10-10  moocow
+	* fixed consistency errors
+	* updated docs
+
+v0.02 2012-10-09  moocow
+	* added vv* functions (vec-wise search, returns 32-bit index-vec)
+	* renamed to top-level Algorithm::BinarySearch::Vec
+	* cleaned up for cpan release
+	* added README, docs
+	* got tests working
+
+v0.01 2012-10-08 moocow
+	* fast binary search on perl vec() vectors
+	* original version as Algorithm::BinarySearch::Vec::XS
