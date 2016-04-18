@@ -3,6 +3,7 @@
 
 use lib qw(./blib/lib ./blib/arch);
 use Algorithm::BinarySearch::Vec ':all';
+use Benchmark qw(cmpthese timethese);
 use Test::More;
 no warnings 'portable'; ##-- avoid "Bit vector size > 32 non-portable" errors
 
@@ -395,7 +396,109 @@ sub test_quad {
 
   print STDERR "test_quad() done.\n";
 }
-test_quad();
+#test_quad();
+
+##--------------------------------------------------------------
+## set ops: union
+
+sub test_union {
+  my $nbits = shift || 8;
+  my $avec = makevec($nbits, [qw(1 2 3 4 5 6 7 8 9)]);
+  my $bvec = makevec($nbits, [qw(2 4 6 8 10 12 14)]);
+  my $cvec = vvunion($avec,$bvec,$nbits);
+
+  my $clist = vec2list($cvec,$nbits);
+  is_deeply($clist, [(1..9),(12,14)], "vvunion");
+
+  print STDERR "test_union(): done.\n";
+}
+#test_union @ARGV;
+
+##--------------------------------------------------------------
+## set ops: intersect
+
+sub test_intersect {
+  my $nbits = shift || 8;
+  my $avec = makevec($nbits, [qw(1 2 3 4 5 6 7 8 9)]);
+  my $bvec = makevec($nbits, [qw(2 4 6 8 10 12 14)]);
+  my $cvec = vvintersect($avec,$bvec,$nbits);
+
+  my $clist = vec2list($cvec,$nbits);
+  is_deeply($clist, [qw(2 4 6 8)], "vvintersect");
+
+  print STDERR "test_intersect(): done.\n";
+}
+#test_intersect @ARGV;
+
+##--------------------------------------------------------------
+## set ops: setdiff
+
+sub test_setdiff {
+  my $nbits = shift || 8;
+  my $avec = makevec($nbits, [qw(1 2 3 4 5 6 7 8 9)]);
+  my $bvec = makevec($nbits, [qw(2 4 6 8 10 12 14)]);
+  my $cvec = vvsetdiff($avec,$bvec,$nbits);
+
+  my $clist = vec2list($cvec,$nbits);
+  is_deeply($clist, [qw(1 3 5 7 9)], "vvsetdiff");
+
+  print STDERR "test_setdiff(): done.\n";
+}
+#test_setdiff @ARGV;
+
+##--------------------------------------------------------------
+## bench: set intersection (simulate diacollo f2 acquisition)
+
+##-- kern@plato
+# l: N=631799 ; mu=9.10426575540639 ; sigma=24.0569035379271 ; min/max/median=0 / 547 / 2
+# p: N=12 ; mu=479338.833333333 ; sigma=757558.357989208 ; min/max/median=0 / 2849353 / 295066
+##
+##-- kern@kira
+# l: N=291287 ; mu=17.5979978509168 ; sigma=33.5284551256776 ; min/max/median=0 / 548 / 6
+# p: N=12 ; mu=427172.333333333 ; sigma=650768.244694855 ; min/max/median=0 / 2449699 / 285423.5
+##
+##-- zeit@kaskade
+# l: N=678642 ; mu=16.4264472284356 ; sigma=25.338426867474 ; min/max/median=0 / 400 / 7
+# p: N=12 ; mu=928973.083333333 ; sigma=1683321.33617384 ; min/max/median=0 / 6235283 / 371018
+##
+##-- zeitungen@kaskade
+# l: N=1788366 ; mu=14.3146783152889 ; sigma=21.3936860726719 ; min/max/median=0 / 414 / 7
+# p: N=12 ; mu=2133323.66666667 ; sigma=4183780.06375304 ; min/max/median=1 / 15114307 / 509367
+
+sub luniq {
+  my $l = shift;
+  my $x = -1;
+  return [map {$_==$x ? qw() : ($x=$_)} sort {$a<=>$b} @$l];
+}
+
+use PDL;
+use PDL::VectorValued;
+sub bench_intersect {
+  my ($n,$na,$nb,$nbits) = @_;
+  $na ||= 16;
+  #$nb ||= 10**7;
+  $nb ||= 10000000;
+  $n  ||= ($na > $nb ? $na : $nb);
+  $nbits ||= 32;
+  my $ap = ($n*random($na))->qsort->uniq->indx;
+  my $bp = ($n*random($nb))->append($ap)->qsort->uniq->indx;
+  my $av = makevec($nbits, [$ap->list]);
+  my $bv = makevec($nbits, [$bp->list]);
+  my ($cv,$cp,$cvp);
+
+  $cp = $ap->v_intersect($bp);
+  $cv = vvintersect($av,$bv,$nbits);
+  ok(join(' ',$cp->list) eq join(' ',unpack('N*',$cv)), "intersect: pdl~vv");
+
+  cmpthese(-3,
+	    {'pdl:vv_intersect' => sub { $cp = $ap->v_intersect($bp); },
+	     'bsv:vvintersect'  => sub { $cv = vvintersect($av,$bv,$nbits); },
+	    });
+  exit 0;
+}
+bench_intersect @ARGV;
+
+
 
 ##--------------------------------------------------------------
 ## MAIN

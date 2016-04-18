@@ -39,6 +39,7 @@ BEGIN {
      api   => [qw( vbsearch  vbsearch_lb  vbsearch_ub),
 	       qw(vabsearch vabsearch_lb vabsearch_ub),
 	       qw(vvbsearch vvbsearch_lb vvbsearch_ub),
+	       qw(vvunion vvintersect vvsetdiff),
 	      ],
      const => [qw($HAVE_QUAD $KEY_NOT_FOUND)],
      debug => [qw(vget vset vec2array)],

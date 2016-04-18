@@ -16,7 +16,7 @@ sub check_set {
   my $vec='';
  SKIP: {
     skip("64-bit support disabled", 1) if ($nbits > 32 && !$HAVE_QUAD);
-    vec($vec,$i,$nbits) = 0; ##-- pre-allocate
+    vec($vec,$i,$nbits) = 0; ##-- pre-allocate (no longer required?)
     Algorithm::BinarySearch::Vec::vset($vec,$i,$nbits,$val);
     my $vval = vec($vec,$i,$nbits);
     is($vval, $val, "vset(\$vec,index=$i,nbits=$nbits,val=$val); vec(...)==$val");

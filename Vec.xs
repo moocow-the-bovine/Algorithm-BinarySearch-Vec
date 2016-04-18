@@ -1,4 +1,4 @@
-/*-*- Mode: C -*- */
+/*-*- Mode: C -*-*/
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
@@ -12,13 +12,12 @@ typedef unsigned char uchar;
 #ifdef U64TYPE
 #define ABSV_HAVE_QUAD
 #define ABSV_UINT U64TYPE
-#define ABSV_PRI  PRIu64
+#define ABSV_PRI  "%" PRIu64
 #else
 #undef ABSV_HAVE_QUAD
 #define ABSV_UINT U32
-#define ABSV_PRI  PRIu32
-#endif
-
+#define ABSV_PRI  "%" PRIu32
+#endif /* U64TYPE */
 
 //const ABSV_UINT KEY_NOT_FOUND = (ABSV_UINT)-1;
 const ABSV_UINT KEY_NOT_FOUND = 0xffffffff; /*-- still always just 32-bit --*/
@@ -54,7 +53,7 @@ static inline ABSV_UINT absv_vget(const uchar *v, ABSV_UINT i, ABSV_UINT nbits)
 #endif
   default: break;
   }
-  croak("absv_vget() cannot handle NBITS=%" ABSV_PRI " for INDEX=%" ABSV_PRI, nbits, i);
+  croak("absv_vget() cannot handle NBITS=" ABSV_PRI " for INDEX=" ABSV_PRI, nbits, i);
   return KEY_NOT_FOUND;
 }
 
@@ -62,7 +61,6 @@ static inline ABSV_UINT absv_vget(const uchar *v, ABSV_UINT i, ABSV_UINT nbits)
 static inline void absv_vset(uchar *v, ABSV_UINT i, ABSV_UINT nbits, ABSV_UINT val)
 {
   ABSV_UINT b;
-  //fprintf(stderr, "DEBUG: vset(nbits=%lu, i=%lu, val=%lu)\n", nbits,i,val);
   switch (nbits) {
   case 1:	b=i&7;      i>>=3; v[i] = (v[i]&~( 1<<b)) | ((val& 1)<<b); break;
   case 2:	b=(i&3)<<1; i>>=2; v[i] = (v[i]&~( 3<<b)) | ((val& 3)<<b); break;
@@ -78,7 +76,7 @@ static inline void absv_vset(uchar *v, ABSV_UINT i, ABSV_UINT nbits, ABSV_UINT v
     break;
 #endif
   default:
-    croak("absv_vset() cannot handle NBITS=%" ABSV_PRI " for INDEX=%" ABSV_PRI, nbits, i);
+    croak("absv_vset() cannot handle NBITS=" ABSV_PRI " for INDEX=" ABSV_PRI, nbits, i);
     break;
   }
 }
@@ -143,7 +141,7 @@ MODULE = Algorithm::BinarySearch::Vec    PACKAGE = Algorithm::BinarySearch::Vec:
 
 PROTOTYPES: ENABLE
 
-##=====================================================================
+##===================================================================
 ## DEBUG
 ##=====================================================================
 
@@ -162,7 +160,7 @@ CODE:
 OUTPUT:
   RETVAL
 
-##--------------------------------------------------------------
+ ##--------------------------------------------------------------
 void
 vset(SV *vec, ABSV_UINT i, ABSV_UINT nbits, ABSV_UINT val)
 PREINIT:
@@ -171,10 +169,12 @@ PREINIT:
 CODE:
  vp = (uchar *)SvPVbyte(vec,len);
  if (len <= i*nbits/8) {
-  /*-- doesn't propagate to perl sv?
+#if 0
+   //-- doesn't propagate to perl sv?
    vp = (uchar *)SvGROW(vec, (i+1)*nbits/8);
-  */
-   croak("vset(): index %" ABSV_PRI " exceeds vector length = %" ABSV_PRI " element(s)", i, i*nbits/8);
+   SvCUR_set(vec, (i+1)*nbits/8);
+#endif //-- re-allocate
+   croak("vset(): index " ABSV_PRI " exceeds vector length = " ABSV_PRI " element(s)", i, i*nbits/8);
  }
  absv_vset(vp, i, nbits, val);
 
@@ -340,7 +340,7 @@ CODE:
  ihi = items > 4 ? SvUV(ST(4)) : (vlen*8/nbits);
  n   = klen*8/nbits;
  RETVAL = newSVpv("",0);
- SvGROW(RETVAL, n*4);		/*-- always use 32-bit keys --*/
+ SvGROW(RETVAL, n*4);	       //-- always use 32-bit keys
  SvCUR_set(RETVAL, n*4);
  rv = SvPV_nolen(RETVAL);
  for (i=0; i<n; ++i) {
@@ -366,7 +366,7 @@ CODE:
  ihi = items > 4 ? SvUV(ST(4)) : (vlen*8/nbits);
  n   = klen*8/nbits;
  RETVAL = newSVpv("",0);
- SvGROW(RETVAL, n*4);		/*-- always use 32-bit keys --*/
+ SvGROW(RETVAL, n*4);	 	//-- always use 32-bit keys
  SvCUR_set(RETVAL, n*4);
  rv = SvPV_nolen(RETVAL);
  for (i=0; i<n; ++i) {
@@ -392,7 +392,7 @@ CODE:
  ihi = items > 4 ? SvUV(ST(4)) : (vlen*8/nbits);
  n   = klen*8/nbits;
  RETVAL = newSVpv("",0);
- SvGROW(RETVAL, n*4);		/*-- always use 32-bit keys --*/
+ SvGROW(RETVAL, n*4);		//-- always use 32-bit keys
  SvCUR_set(RETVAL, n*4);
  rv = SvPV_nolen(RETVAL);
  for (i=0; i<n; ++i) {
@@ -400,5 +400,125 @@ CODE:
    ABSV_UINT found = absv_bsearch_ub(v,key,ilo,ihi,nbits);
    absv_vset(rv,i,32,found);
  }
+OUTPUT:
+ RETVAL
+
+##=====================================================================
+## SET OPERATIONS
+
+##--------------------------------------------------------------
+SV*
+vvunion(SV *avec, SV *bvec, ABSV_UINT nbits)
+PREINIT:
+  const uchar *a, *b;
+  uchar *c;
+  STRLEN alen,blen;
+  ABSV_UINT na,nb,nc, ai,bi,ci, aval,bval;
+CODE:
+ if (nbits < 8)
+   croak("vvunion(): cannot handle nbits < 8, but you requested " ABSV_PRI, nbits);
+ a = SvPV(avec,alen);
+ b = SvPV(bvec,blen);
+ na = alen*8/nbits;
+ nb = blen*8/nbits;
+ nc = na + nb;
+ RETVAL = newSVpv("",0);
+ SvGROW(RETVAL, nc*nbits/8);
+ c = SvPV_nolen(RETVAL);
+ for (ai=0,bi=0,ci=0; ai < na && bi < nb; ++ci) {
+   aval = absv_vget(a,ai,nbits);
+   bval = absv_vget(b,bi,nbits);
+   if (aval < bval) {
+     absv_vset(c,ci,nbits,aval);
+     ++ai;
+   } else if (aval > bval) {
+     absv_vset(c,ci,nbits,bval);
+     ++bi;
+   } else { //-- aval==bval
+     absv_vset(c,ci,nbits,aval);
+     ++ai;
+     ++bi;
+   }
+ }
+ for (; ai < na; ++ai, ++ci)
+   absv_vset(c,ci,nbits,absv_vget(a,ai,nbits));
+ for (; bi < nb; ++bi, ++ci)
+   absv_vset(c,ci,nbits,absv_vget(b,bi,nbits));
+ SvCUR_set(RETVAL, ci*nbits/8);
+OUTPUT:
+ RETVAL
+
+##--------------------------------------------------------------
+SV*
+vvintersect(SV *avec, SV *bvec, ABSV_UINT nbits)
+PREINIT:
+  const uchar *a, *b;
+  uchar *c;
+  STRLEN alen,blen;
+  ABSV_UINT na,nb,nc, ai,blo,bi,ci, aval,bval;
+CODE:
+ if (nbits < 8)
+   croak("vvintersect(): cannot handle nbits < 8, but you requested " ABSV_PRI, nbits);
+ a = SvPV(avec,alen);
+ b = SvPV(bvec,blen);
+ if (blen < alen) {
+   //-- ensure shorter set is "a"
+   const uchar *tmp = b;
+   STRLEN tmplen = blen;
+   b = a;
+   a = tmp;
+   blen = alen;
+   alen = tmplen;
+ }
+ na = alen*8/nbits;
+ nb = blen*8/nbits;
+ nc = na;
+ RETVAL = newSVpv("",0);
+ SvGROW(RETVAL, nc*nbits/8);
+ c = SvPV_nolen(RETVAL);
+ for (ai=0,blo=0,ci=0; ai < na; ++ai) {
+   aval = absv_vget(a,ai,nbits);
+   bi   = absv_bsearch_ub(b,aval,blo,nb,nbits);
+   if (bi   == KEY_NOT_FOUND) break;
+   if (aval == absv_vget(b,bi,nbits)) {
+     absv_vset(c,ci++,nbits,aval);
+   }
+   blo = bi;
+ }
+ SvCUR_set(RETVAL, ci*nbits/8);
+OUTPUT:
+ RETVAL
+
+##--------------------------------------------------------------
+SV*
+vvsetdiff(SV *avec, SV *bvec, ABSV_UINT nbits)
+PREINIT:
+  const uchar *a, *b;
+  uchar *c;
+  STRLEN alen,blen;
+  ABSV_UINT na,nb,nc, ai,blo,bi,ci, aval,bval;
+CODE:
+ if (nbits < 8)
+   croak("vvsetdiff(): cannot handle nbits < 8, but you requested " ABSV_PRI, nbits);
+ a = SvPV(avec,alen);
+ b = SvPV(bvec,blen);
+ na = alen*8/nbits;
+ nb = blen*8/nbits;
+ nc = na;
+ RETVAL = newSVpv("",0);
+ SvGROW(RETVAL, nc*nbits/8);
+ c = SvPV_nolen(RETVAL);
+ for (ai=0,blo=0,ci=0; ai < na; ++ai) {
+   aval = absv_vget(a,ai,nbits);
+   bi   = absv_bsearch_ub(b,aval,blo,nb,nbits);
+   if (bi   == KEY_NOT_FOUND) break;
+   if (aval != absv_vget(b,bi,nbits)) {
+     absv_vset(c,ci++,nbits,aval);
+   }
+   blo = bi;
+ }
+ for ( ; ai < na; ++ai)
+   absv_vset(c,ci++,nbits,absv_vget(a,ai,nbits));
+ SvCUR_set(RETVAL, ci*nbits/8);
 OUTPUT:
  RETVAL
