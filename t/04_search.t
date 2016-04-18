@@ -1,8 +1,9 @@
 # -*- Mode: CPerl -*-
-# t/03_search.t; test search
+# t/04_search.t; test search
 
 use Test::More tests=>46;
 use Algorithm::BinarySearch::Vec ':default';
+no warnings 'portable';
 
 my $NOKEY = $KEY_NOT_FOUND;
 my $PKG   = 'Algorithm::BinarySearch::Vec';
@@ -60,9 +61,8 @@ sub check_search {
     my $i    = $code->($v,$key,$nbits); #, 0,$#$l);
     my $istr = n2str($i);
     my $wstr = n2str($want);
-    my $rc   = ($istr eq $wstr);
-    ok($rc, "check_search: ".fstr($func)."(nbits=$nbits,key=$key,l=[".l2str($l)."]) == $want");
-    return $rc;
+    is($istr, $wstr, "check_search: ".fstr($func)."(nbits=$nbits,key=$key,l=[".l2str($l)."]) == $want");
+    return ($istr eq $wstr);
   }
 }
 
@@ -115,13 +115,11 @@ sub check_asearch {
     my $code = eval "\\\&$func";
     my $v    = makevec($nbits,$l);
     my @keys = sort {$a<=>$b} keys %$key2want;
-    my $want = @$key2want{@keys};
     my $il   = $code->($v,\@keys,$nbits); #, 0,$#$l);
     my $istr = h2str({map {($keys[$_]=>$il->[$_])} (0..$#keys)});
     my $wstr = h2str($key2want);
-    my $rc   = ($istr eq $wstr);
-    ok($rc, "check_asearch: ".fstr($func)."(nbits=$nbits,l=[".l2str($l)."]) == {".h2str($key2want)."}");
-    return $rc;
+    is($istr, $wstr, "check_asearch: ".fstr($func)."(nbits=$nbits,l=[".l2str($l)."]) == {$wstr}");
+    return ($istr eq $wstr);
   }
 }
 
@@ -146,13 +144,11 @@ sub check_vvsearch {
     my $v    = makevec($nbits,$l);
     my @keys = sort {$a<=>$b} keys %$key2want;
     my $keyv = makevec($nbits,\@keys);
-    my $want = @$key2want{@keys};
     my $iv   = $code->($v,$keyv,$nbits); #, 0,$#$l);
-    my $istr = h2str($key2want);
-    my $wstr = h2str({map {($keys[$_]=>vec($iv,$_,32))} (0..$#keys)});
-    my $rc   = ($istr eq $wstr);
-    ok($rc, "check_vvsearch: ".fstr($func)."(nbits=$nbits,l=[".l2str($l)."]) == {".h2str($key2want)."}");
-    return $rc;
+    my $istr = h2str({map {($keys[$_]=>vec($iv,$_,32))} (0..$#keys)});
+    my $wstr = h2str($key2want);
+    is($istr, $wstr, "check_vvsearch: ".fstr($func)."(nbits=$nbits,l=[".l2str($l)."]) == {$wstr}");
+    return ($istr eq $wstr);
   }
 }
 
@@ -164,4 +160,4 @@ foreach my $prefix ("${PKG}::_","${PKG}::XS::") {
 }
 
 
-# end of t/02_search.t
+# end of t/04_search.t

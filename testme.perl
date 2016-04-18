@@ -3,6 +3,8 @@
 
 use lib qw(./blib/lib ./blib/arch);
 use Algorithm::BinarySearch::Vec ':all';
+use Test::More;
+no warnings 'portable'; ##-- avoid "Bit vector size > 32 non-portable" errors
 
 our $NOKEY = $KEY_NOT_FOUND;
 our $PKG   = 'Algorithm::BinarySearch::Vec';
@@ -92,6 +94,7 @@ sub test_vget {
   my $v8 = makevec(8, [qw(0 1 2 4 8 16 32 64 128 255)]);
   my $v16 = makevec(16, [qw(100 500 1000 65000)]);
   my $v32 = makevec(32, [qw(100 500 1000 100000)]);
+  my $v64 = makevec(64, [qw(1 1000 1000000 1000000000 1000000000000)]);
 
   ##-- debug
   if (0) {
@@ -101,12 +104,13 @@ sub test_vget {
     checkvec($v8,8);
     checkvec($v16,16);
     checkvec($v32,32);
+    checkvec($v64,64);
     exit 0;
   }
 
   ##-- random
   my $ok = 1;
-  foreach my $nbits (qw(1 2 4 8 16 32)) {
+  foreach my $nbits (qw(1 2 4 8 16 32 64)) {
     my $nelem = 100;
     my $l     = [map {int(rand(2**$nbits))} (1..$nelem)];
     my $v     = makevec($nbits, $l);
@@ -202,7 +206,7 @@ sub test_bsearch {
   die("test_bsearch() failed!\n") if (!$rc);
   print "\n";
 }
-test_bsearch();
+#test_bsearch();
 
 
 ##--------------------------------------------------------------
@@ -243,7 +247,7 @@ sub test_lb_sx {
   $lb = $func->($sxv0,4576,32);
   die("BAD: sx (want=0; got=$lb)!") if ( $lb != 0 );
 }
-test_lb_sx();
+#test_lb_sx();
 
 
 
@@ -251,7 +255,7 @@ test_lb_sx();
 ## test: upper_bound
 
 sub check_ub {
-  check_search('vbsearch_ub',@_);
+  check_search('vbsearch_sub',@_);
 }
 
 sub test_ub {
@@ -266,7 +270,7 @@ sub test_ub {
   die("test_ub() failed!\n") if (!$rc);
   print "\n";
 }
-test_ub();
+#test_ub();
 
 
 ##--------------------------------------------------------------
@@ -306,7 +310,7 @@ sub test_absearch {
   die("test_absearch() failed!\n") if (!$rc);
   print "\n";
 }
-test_absearch(); exit 0;
+#test_absearch(); exit 0;
 
 ##--------------------------------------------------------------
 ## test: bsearch: vec-wise
@@ -345,8 +349,53 @@ sub test_vvsearch {
   die("test_absearch() failed!\n") if (!$rc);
   print "\n";
 }
-test_vvsearch();
+#test_vvsearch();
 
+##--------------------------------------------------------------
+## quads
+
+no warnings 'portable';
+
+sub test_quad {
+  my $val = '9876543210';
+
+  my ($v32,$v64);
+  vec($v32, 0, 32) = $val;
+  vec($v64, 0, 64) = $val;
+  my $got32 = vec($v32,0,32);
+  my $got64 = vec($v64,0,64);
+  my $vgot64 = Algorithm::BinarySearch::Vec::XS::vget($v64,0,64);
+
+  ##-- vget: test initial item
+  ok("$got32" ne "$val", "vec(\$v,0,32) ne $val");
+  ok("$got64" eq "$val", "vec(\$v,0,64) eq $val");
+  ok("$vgot64" eq "$val", "vget(\$v,0,64) eq $val");
+
+  ##-- vget: test non-initial item
+  my $i = 17;
+  vec($v64,$i,64) = $val;
+  $got64  = vec($v64,$i,64);
+  $vgot64 = Algorithm::BinarySearch::Vec::XS::vget($v64,$i,64);
+  ok("$got64" eq "$val", "vec(\$v,$i,64) eq $val");
+  ok("$vgot64" eq "$val", "vget(\$v,$i,64) eq $val");
+
+  ##-- vset: test initial item
+  ++$val;
+  $i = 0;
+  Algorithm::BinarySearch::Vec::XS::vset($v64,$i,64,$val);
+  $got64  = vec($v64,$i,64);
+  ok("$got64" eq "$val", "vset: vec(\$v,$i,64) eq $val");
+
+  ##-- vset: test non-initial item
+  ++$val;
+  $i = 17;
+  Algorithm::BinarySearch::Vec::XS::vset($v64,$i,64,$val);
+  $got64  = vec($v64,$i,64);
+  ok("$got64" eq "$val", "vset: vec(\$v,$i,64) eq $val");
+
+  print STDERR "test_quad() done.\n";
+}
+test_quad();
 
 ##--------------------------------------------------------------
 ## MAIN

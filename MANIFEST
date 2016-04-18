@@ -3,7 +3,9 @@ MANIFEST			This list of files
 README.txt
 Changes
 t/01_ini.t
-t/02_search.t
+t/02_const.t
+t/03_access.t
+t/04_search.t
 t/common.plt
 typemap
 Vec.pm

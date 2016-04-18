@@ -3,11 +3,12 @@ package Algorithm::BinarySearch::Vec;
 use Exporter;
 use Carp;
 use AutoLoader;
+use Config qw();
 use strict;
 use bytes;
 
 our @ISA = qw(Exporter);
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 
 our ($HAVE_XS);
 eval {
@@ -26,7 +27,10 @@ eval {
 ## Exports
 ##======================================================================
 
-our $KEY_NOT_FOUND = 0xffffffff;
+no warnings 'portable'; ##-- avoid "Bit vector size > 32 non-portable" errors for native quads
+our $HAVE_QUAD     = $HAVE_XS ? Algorithm::BinarySearch::Vec::XS::HAVE_QUAD()     : $Config::Config{d_quad};
+our $KEY_NOT_FOUND = $HAVE_XS ? Algorithm::BinarySearch::Vec::XS::KEY_NOT_FOUND() : 0xffffffff;
+#our $KEY_NOT_FOUND = $HAVE_XS ? Algorithm::BinarySearch::Vec::XS::KEY_NOT_FOUND() : ($HAVE_QUAD ? 0xffffffffffffffff : 0xffffffff);
 
 our (%EXPORT_TAGS, @EXPORT_OK, @EXPORT);
 BEGIN {
@@ -36,7 +40,7 @@ BEGIN {
 	       qw(vabsearch vabsearch_lb vabsearch_ub),
 	       qw(vvbsearch vvbsearch_lb vvbsearch_ub),
 	      ],
-     const => [qw($KEY_NOT_FOUND)],
+     const => [qw($HAVE_QUAD $KEY_NOT_FOUND)],
      debug => [qw(vget vset vec2array)],
     );
   $EXPORT_TAGS{all}     = [map {@$_} @EXPORT_TAGS{qw(api const debug)}];
