@@ -1,18 +1,11 @@
 # -*- Mode: CPerl -*-
-# t/02_search.t; test search
+# t/03_search.t; test search
 
-$TEST_DIR = './t';
-#use lib qw(../blib/lib ../blib/arch); $TEST_DIR = '.'; # for debugging
-
+use Test::More tests=>46;
 use Algorithm::BinarySearch::Vec ':default';
+
 my $NOKEY = $KEY_NOT_FOUND;
 my $PKG   = 'Algorithm::BinarySearch::Vec';
-
-# load common subs
-do "$TEST_DIR/common.plt"
-  or die("could not load $TEST_DIR/common.plt");
-
-plan(test => 46);
 
 ##--------------------------------------------------------------
 ## utils
@@ -49,28 +42,35 @@ sub h2str {
   return join(' ', map {(n2str($_).":".n2str($h->{$_}))} sort {$a<=>$b} keys %$h);
 }
 
+## $str = fstr("$func")
+sub fstr {
+  (my $func = shift) =~ s/^Algorithm::BinarySearch::Vec:://;
+  return $func;
+}
+
 ##======================================================================
 ## test: element-wise: generic
 
 sub check_search {
   my ($func,$nbits,$l,$key,$want) = @_;
-  print "check_search:$func(nbits=$nbits,key=$key,l=[",l2str($l),"]): ";
-  my $code = eval "\\\&$func";
-  my $v    = makevec($nbits,$l);
-  my $i    = $code->($v,$key,$nbits); #, 0,$#$l);
-  my $istr = n2str($i);
-  my $wstr = n2str($want);
-  my $rc   = ($istr eq $wstr);
-  print
-    (($rc ? "good (=$wstr)" : "BAD (want=$wstr != got=$istr)"), "\n");
-  ok($rc);
-  return $rc;
+ SKIP: {
+    skip("XS support disabled", 1) if ($func =~ /\bXS\b/ && !$Algorithm::BinarySearch::Vec::HAVE_XS);
+    my $code = eval "\\\&$func";
+    my $v    = makevec($nbits,$l);
+    my $i    = $code->($v,$key,$nbits); #, 0,$#$l);
+    my $istr = n2str($i);
+    my $wstr = n2str($want);
+    my $rc   = ($istr eq $wstr);
+    ok($rc, "check_search: ".fstr($func)."(nbits=$nbits,key=$key,l=[".l2str($l)."]) == $want");
+    return $rc;
+  }
 }
 
 ##--------------------------------------------------------------
 ## test: element-wise: bsearch: (0) +(5*2) = (1..10)
-foreach my $func ("${PKG}::_vbsearch", "${PKG}::XS::vbsearch") {
+foreach my $func ("${PKG}::_vbsearch","${PKG}::XS::vbsearch") {
   my $l = [qw(1 2 4 8 16 32 64 128 256)];
+  my $ls = l2str($l);
   check_search($func, 32,$l, 8=>3);
   check_search($func, 32,$l, 7=>$NOKEY);
   check_search($func, 32,$l, 0=>$NOKEY);
@@ -110,19 +110,19 @@ foreach my $func ("${PKG}::_vbsearch_ub", "${PKG}::XS::vbsearch_ub") {
 
 sub check_asearch {
   my ($func,$nbits,$l,$key2want) = @_;
-  print "check_asearch:$func(nbits=$nbits,l=[",l2str($l),"],want={",h2str($key2want),"}): ";
-  my $code = eval "\\\&$func";
-  my $v    = makevec($nbits,$l);
-  my @keys = sort {$a<=>$b} keys %$key2want;
-  my $want = @$key2want{@keys};
-  my $il   = $code->($v,\@keys,$nbits); #, 0,$#$l);
-  my $istr = h2str({map {($keys[$_]=>$il->[$_])} (0..$#keys)});
-  my $wstr = h2str($key2want);
-  my $rc   = ($istr eq $wstr);
-  print
-    (($rc ? "good (=[$wstr])" : "BAD (want=[$wstr] != got=[$istr])"), "\n");
-  ok($rc);
-  return $rc;
+ SKIP: {
+    skip("XS support disabled", 1) if ($func =~ /\bXS\b/ && !$Algorithm::BinarySearch::Vec::HAVE_XS);
+    my $code = eval "\\\&$func";
+    my $v    = makevec($nbits,$l);
+    my @keys = sort {$a<=>$b} keys %$key2want;
+    my $want = @$key2want{@keys};
+    my $il   = $code->($v,\@keys,$nbits); #, 0,$#$l);
+    my $istr = h2str({map {($keys[$_]=>$il->[$_])} (0..$#keys)});
+    my $wstr = h2str($key2want);
+    my $rc   = ($istr eq $wstr);
+    ok($rc, "check_asearch: ".fstr($func)."(nbits=$nbits,l=[".l2str($l)."]) == {".h2str($key2want)."}");
+    return $rc;
+  }
 }
 
 ##--------------------------------------------------------------
@@ -140,20 +140,20 @@ foreach my $prefix ("${PKG}::_","${PKG}::XS::") {
 
 sub check_vvsearch {
   my ($func,$nbits,$l,$key2want) = @_;
-  print "check_vvsearch:$func(nbits=$nbits,l=[",l2str($l),"],want={",h2str($key2want),"}): ";
-  my $code = eval "\\\&$func";
-  my $v    = makevec($nbits,$l);
-  my @keys = sort {$a<=>$b} keys %$key2want;
-  my $keyv = makevec($nbits,\@keys);
-  my $want = @$key2want{@keys};
-  my $iv   = $code->($v,$keyv,$nbits); #, 0,$#$l);
-  my $istr = h2str($key2want);
-  my $wstr = h2str({map {($keys[$_]=>vec($iv,$_,32))} (0..$#keys)});
-  my $rc   = ($istr eq $wstr);
-  print
-    (($rc ? "good (=[$wstr])" : "BAD (want=[$wstr] != got=[$istr])"), "\n");
-  ok($rc);
-  return $rc;
+ SKIP: {
+    skip("XS support disabled", 1) if ($func =~ /\bXS\b/ && !$Algorithm::BinarySearch::Vec::HAVE_XS);
+    my $code = eval "\\\&$func";
+    my $v    = makevec($nbits,$l);
+    my @keys = sort {$a<=>$b} keys %$key2want;
+    my $keyv = makevec($nbits,\@keys);
+    my $want = @$key2want{@keys};
+    my $iv   = $code->($v,$keyv,$nbits); #, 0,$#$l);
+    my $istr = h2str($key2want);
+    my $wstr = h2str({map {($keys[$_]=>vec($iv,$_,32))} (0..$#keys)});
+    my $rc   = ($istr eq $wstr);
+    ok($rc, "check_vvsearch: ".fstr($func)."(nbits=$nbits,l=[".l2str($l)."]) == {".h2str($key2want)."}");
+    return $rc;
+  }
 }
 
 foreach my $prefix ("${PKG}::_","${PKG}::XS::") {
