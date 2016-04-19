@@ -543,7 +543,7 @@ This is equivalent to (but usually faster than):
 ## API: Set Opterations
 =pod
 
-=head2 API: Set Operations
+=head2 Set Operations
 
 The set operations supported by this module assume that the vec()-style vector sets
 are sorted in ascending order, contain no duplicates, and are encoded with
