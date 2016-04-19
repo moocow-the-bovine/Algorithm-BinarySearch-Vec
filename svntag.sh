@@ -2,7 +2,8 @@
 
 svnroot=`svnroot.sh .`
 svntags="${svnroot%/trunk}/tags";
-tagprefix=$(basename $(readlink -f $(dirname "$0")))
+#tagprefix=$(basename $(readlink -f $(dirname "$0")))
+tagprefix=v
 tagversion=$(perl-reversion -dryrun *.pm | tail -n1 | awk '{print $5}')
 dummy=""
 
@@ -17,7 +18,7 @@ Options:
   -d           # dummy mode
   -v VERSION   # override tag version (default=$tagversion)
   -p PREFIX    # override tag prefix (default=$tagprefix)
-  -t           # tag current version as PREFIX-VERSION
+  -t           # tag current version as \${PREFIX}\${VERSION}
   -t TAG       # tag current version as TAG
 
 EOF
@@ -34,7 +35,7 @@ list_tags() {
 }
 set_tag() {
     svntag="$1"
-    test -z "$svntag" && svntag="${tagprefix}-${tagversion}"
+    test -z "$svntag" && svntag="${tagprefix}${tagversion}"
     if [ -z "$svntag" ] ; then
 	echo "$0: no TAG specified" >&2
 	show_help
