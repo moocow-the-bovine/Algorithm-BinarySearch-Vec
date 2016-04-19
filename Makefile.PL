@@ -7,7 +7,7 @@ WriteMakefile
   (
    NAME		=> 'Algorithm::BinarySearch::Vec',
    AUTHOR       => 'Bryan Jurish <moocow@cpan.org>',
-   ABSTRACT	=> 'binary search functions for vec() vectors, with fast XS implementations',
+   ABSTRACT	=> 'binary search and basic set operations for vec() vectors, with fast XS implementations',
    VERSION_FROM	=> 'Vec.pm',
 
    ##-- user variables

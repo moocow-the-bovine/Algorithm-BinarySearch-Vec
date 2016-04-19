@@ -7,7 +7,6 @@ t/02_const.t
 t/03_access.t
 t/04_search.t
 t/05_setops.t
-t/common.plt
 typemap
 Vec.pm
 Vec.xs

@@ -39,7 +39,7 @@ BEGIN {
      api   => [qw( vbsearch  vbsearch_lb  vbsearch_ub),
 	       qw(vabsearch vabsearch_lb vabsearch_ub),
 	       qw(vvbsearch vvbsearch_lb vvbsearch_ub),
-	       qw(vvunion vvintersect vvsetdiff),
+	       qw(vunion vintersect vsetdiff),
 	      ],
      const => [qw($HAVE_QUAD $KEY_NOT_FOUND)],
      debug => [qw(vget vset vec2array)],
@@ -185,6 +185,79 @@ sub _vvbsearch_ub {
   return pack('N*', @{vabsearch_ub($_[0],vec2array(@_[1,2]),@_[2..$#_])});
 }
 
+##======================================================================
+## API: set operations
+
+##--------------------------------------------------------------
+## $vunion = vunion($av,$bv,$nbits)
+sub _vunion {
+  my ($avr,$bvr,$nbits) = (\$_[0],\$_[1],$_[2]);
+  die(__PACKAGE__ , "::_vunion(): cannot handle nbits < 8, but you requested $nbits") if ($nbits < 8);
+  my $na = length($$avr)*8/$nbits;
+  my $nb = length($$bvr)*8/$nbits;
+  my $cv = '';
+  my ($ai,$bi,$ci, $aval,$bval);
+  for ($ai=0,$bi=0,$ci=0; $ai < $na && $bi < $nb; ++$ci) {
+    $aval = vec($$avr,$ai,$nbits);
+    $bval = vec($$bvr,$bi,$nbits);
+    if ($aval <= $bval) {
+      vec($cv,$ci,$nbits) = $aval;
+      ++$ai;
+      ++$bi if ($aval == $bval);
+    } else { ##-- $aval == $bval
+      vec($cv,$ci,$nbits) = $bval;
+      ++$bi;
+    }
+  }
+  $cv .= substr($$avr, $ai*$nbits/8);
+  $cv .= substr($$bvr, $bi*$nbits/8);
+  return $cv;
+}
+
+##--------------------------------------------------------------
+## $vintersect = vintersect($av,$bv,$nbits)
+sub _vintersect {
+  my ($avr,$bvr,$nbits) = (\$_[0],\$_[1],$_[2]);
+  die(__PACKAGE__ , "::_vintersect(): cannot handle nbits < 8, but you requested $nbits") if ($nbits < 8);
+
+  ##-- ensure smaller set is "a"
+  ($$avr,$$bvr) = ($$bvr,$$avr) if (length($$bvr) < length($$avr));
+
+  my $na = length($$avr)*8/$nbits;
+  my $nb = length($$bvr)*8/$nbits;
+  my $cv = '';
+  my ($ai,$bi,$ci, $blo,$aval,$bval);
+  for ($ai=0,$blo=0,$ci=0; $ai < $na; ++$ai) {
+    $aval = vec($$avr,$ai,$nbits);
+    $bi   = _vbsearch_ub($$bvr,$aval,$nbits,$blo,$nb);
+    last if ($bi == $KEY_NOT_FOUND);
+    vec($cv,$ci++,$nbits) = $aval if ($aval == vec($$bvr,$bi,$nbits));
+    $blo = $bi;
+  }
+  return $cv;
+}
+
+##--------------------------------------------------------------
+## $vsetdiff = vsetdiff($av,$bv,$nbits)
+sub _vsetdiff {
+  my ($avr,$bvr,$nbits) = (\$_[0],\$_[1],$_[2]);
+  die(__PACKAGE__ , "::_vintersect(): cannot handle nbits < 8, but you requested $nbits") if ($nbits < 8);
+
+  my $na = length($$avr)*8/$nbits;
+  my $nb = length($$bvr)*8/$nbits;
+  my $cv = '';
+  my ($ai,$bi,$ci, $blo,$aval,$bval);
+  for ($ai=0,$blo=0,$ci=0; $ai < $na; ++$ai) {
+    $aval = vec($$avr,$ai,$nbits);
+    $bi   = _vbsearch_ub($$bvr,$aval,$nbits,$blo,$nb);
+    last if ($bi == $KEY_NOT_FOUND);
+    vec($cv,$ci++,$nbits) = $aval if ($aval != vec($$bvr,$bi,$nbits));
+    $blo = $bi;
+  }
+  $cv .= substr($$avr, $ai*$nbits/8);
+  return $cv;
+}
+
 
 ##======================================================================
 ## delegate: attempt to delegate to XS module
@@ -206,7 +279,7 @@ __END__
 
 =head1 NAME
 
-Algorithm::BinarySearch::Vec - binary search functions for vec()-vectors with fast XS implementations
+Algorithm::BinarySearch::Vec - binary search functions and basic set operations for vec()-vectors with fast XS implementations
 
 =head1 SYNOPSIS
 
@@ -236,6 +309,12 @@ Algorithm::BinarySearch::Vec - binary search functions for vec()-vectors with fa
  $ixvec = vvbsearch_ub($v,$keyvec,$nbits,$lo,$hi); ##-- upper bound
  
  ##-------------------------------------------------------------
+ ## Set Operations
+ $cv = vunion($av,$bv,$nbits);          ##-- set union
+ $cv = vintersect($av,$bv,$nbits);      ##-- set intersection
+ $cv = vsetdiff($av,$bv,$nbits);        ##-- set difference
+ 
+ ##-------------------------------------------------------------
  ## Debugging
  $val  = vget($vec,$i,$nbits);
  undef = vset($vec,$i,$nbits, $newval);
@@ -244,11 +323,30 @@ Algorithm::BinarySearch::Vec - binary search functions for vec()-vectors with fa
 
 =head1 DESCRIPTION
 
-The Algorithm::BinarySearch::Vec perl module provides binary search functions for vec()-vectors,
-including fast XS implementations in the package Algorithm::BinarySearch::Vec::XS.
+The Algorithm::BinarySearch::Vec perl module provides binary search functions and
+basic set operations for L<vec()|perlfunc/vec-EXPR-OFFSET-BITS>-vectors,
+including fast XS implementations in the package C<Algorithm::BinarySearch::Vec::XS>.
 The XS implementations are used by default if available, otherwise pure-perl fallbacks are provided.
 You can check whether the XS implementations are available on your system by examining the
-boolean scalar $Algorithm::BinarySearch::Vec::HAVE_XS.
+boolean scalar C<$Algorithm::BinarySearch::Vec::HAVE_XS>.
+
+=cut
+
+##======================================================================
+## Data Conventions
+=pod
+
+=head2 Data Conventions
+
+All API functions provided by this module assume that the elements of the vec()-style vector arguments
+are sorted in strictly ascending order.  The user is responsible for assuring that this is the case,
+since no additional checking is done by this module.
+
+=cut
+
+##======================================================================
+## Exports
+=pod
 
 =head2 Exports
 
@@ -442,6 +540,41 @@ This is equivalent to (but usually faster than):
 =cut
 
 ##======================================================================
+## API: Set Opterations
+=pod
+
+=head2 API: Set Operations
+
+The set operations supported by this module assume that the vec()-style vector sets
+are sorted in ascending order, contain no duplicates, and are encoded with
+C<$nbits E<gt>= 8>; i.e. every element-boundary must lie on a byte-boundary.
+The vector-sets returned by these API functions should also conform to these
+conventions whenever the parameters do.
+
+=over 4
+
+=item vunion($av,$bv,$nbits)
+
+Computes the union of two sorted vec()-style sets C<$av> and C<$bv>
+and returns the result as a sorted vector-set.  Complexity is I<O>(C<$a> + C<$b>)>.
+
+=item vintersect($av,$bv,$nbits)
+
+Computes the intersection of two sorted vec()-style sets C<$av> and C<$bv>
+and returns the result as a sorted vector-set.  Complexity is I<O>(C<$A> * log C<$B>),
+where C<$A> is the shorter and C<$B> the longer of the argument vectors C<$a> and C<$b>.
+
+=item vsetdiff($av,$bv,$nbits)
+
+Computes the difference of two sorted vec()-style sets C<$av> and C<$bv>
+and returns the result as a sorted vector-set.  Complexity is I<O>(C<$A> * log C<$B>),
+where C<$A> is the shorter and C<$B> the longer of the argument vectors C<$a> and C<$b>.
+
+=back
+
+=cut
+
+##======================================================================
 ## Debugging
 =pod
 
@@ -473,7 +606,7 @@ Debugging utility, equivalent to
 
 =head1 SEE ALSO
 
-L<vec() in perlfunc(1)|perlfunc/"vec">,
+L<vec() in perlfunc(1)|perlfunc/vec-EXPR-OFFSET-BITS>,
 PDL(3perl),
 perl(1).
 
@@ -483,7 +616,7 @@ Bryan Jurish E<lt>moocow@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2012 by Bryan Jurish
+Copyright (C) 2012-2016 by Bryan Jurish
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.1 or,

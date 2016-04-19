@@ -3,11 +3,11 @@ Revision history for Perl module Algorithm::BinarySearch::Vec
 v0.07 Mon, 18 Apr 2016 16:42:44 +0200 moocow
 	* added support for nbits==64; indices are still always 32-bit
 	  - for batch vector-wise search variants we'll need xs sub variants to ensure compatibility
-	* added set operations vvunion(), vvintersect(), vvsetdiff()
-	  - intersect & setdiff optimized for merging a tiny set with a gigantic one, independent of argument order
+	* added set operations vunion(), vintersect(), vsetdiff()
+	  - intersect & setdiff optimized for merging a small set $a with a large one $b, independent of argument order: O($Na * log $Nb)
 	* re-worked tests to use Test::More
 
-v0.06 2015-04-08 moocow
+v0.06 2015-04-08 moocow (no cpan release)
 	* fixed unrespected strict imin checking in absv_bsearch_lb()
 
 v0.05 2012-10-31  moocow

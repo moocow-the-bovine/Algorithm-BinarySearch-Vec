@@ -11,3 +11,6 @@ README\.rpod
 ~$
 \.tar\.gz$
 \.vec$
+^MYMETA\.
+^reversion\.sh$
+^svntag\.sh$

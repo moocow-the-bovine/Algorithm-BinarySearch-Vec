@@ -1,7 +1,7 @@
 # -*- Mode: CPerl -*-
 # t/05_setops.t; test set operations
 
-use Test::More tests=>8;
+use Test::More tests=>24;
 use Algorithm::BinarySearch::Vec ':default';
 no warnings 'portable';
 
@@ -63,14 +63,35 @@ sub check_setop {
 }
 
 ##======================================================================
-## test: union
+## test: common
 my $al = [qw(1 2 3 4 5 6 7 8 9)];
 my $bl = [qw(2 4 6 8 10 12 14)];
-my $c_union = [(1..9),(10,12,14)];
+my ($c_want);
 
-foreach my $func ("${PKG}::_vvunion","${PKG}::XS::vvunion") { ##-- *2 [TODO: write _vvunion &c!]
-  foreach my $nbits (8,16,32,64) { ##-- *4
-    check_setop($func, $nbits, $al,$bl, $c_union); ##-- *1
+##======================================================================
+## test: union +8
+$c_want = [(1..9),(10,12,14)];
+foreach my $func ("${PKG}::_vunion","${PKG}::XS::vunion") {
+  foreach my $nbits (8,16,32,64) {
+    check_setop($func, $nbits, $al,$bl, $c_want);
+  }
+}
+
+##======================================================================
+## test: intersect: +8
+$c_want = [qw(2 4 6 8)];
+foreach my $func ("${PKG}::_vintersect","${PKG}::XS::vintersect") {
+  foreach my $nbits (8,16,32,64) {
+    check_setop($func, $nbits, $al,$bl, $c_want);
+  }
+}
+
+##======================================================================
+## test: setdiff: +8
+$c_want = [qw(1 3 5 7 9)];
+foreach my $func ("${PKG}::_vsetdiff","${PKG}::XS::vsetdiff") {
+  foreach my $nbits (8,16,32,64) {
+    check_setop($func, $nbits, $al,$bl, $c_want);
   }
 }
 

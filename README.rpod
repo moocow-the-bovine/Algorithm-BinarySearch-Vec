@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-README for Algorithm::BinarySearch::Vec - binary search for vec()-vectors
+README for Algorithm::BinarySearch::Vec - binary search and basic set operations for vec()-vectors
 
 =cut
 
@@ -11,8 +11,8 @@ README for Algorithm::BinarySearch::Vec - binary search for vec()-vectors
 
 =head1 DESCRIPTION
 
-The Algorithm::BinarySearch::Vec perl module provides binary search functions for vec()-vectors,
-including fast XS implementations, which are used by default if available.
+The Algorithm::BinarySearch::Vec perl module provides binary search functions and basic set operations
+for vec()-vectors, including fast XS implementations, which are used by default if available.
 
 =cut
 

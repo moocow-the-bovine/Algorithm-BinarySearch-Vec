@@ -408,7 +408,7 @@ OUTPUT:
 
 ##--------------------------------------------------------------
 SV*
-vvunion(SV *avec, SV *bvec, ABSV_UINT nbits)
+vunion(SV *avec, SV *bvec, ABSV_UINT nbits)
 PREINIT:
   const uchar *a, *b;
   uchar *c;
@@ -416,7 +416,7 @@ PREINIT:
   ABSV_UINT na,nb,nc, ai,bi,ci, aval,bval;
 CODE:
  if (nbits < 8)
-   croak("vvunion(): cannot handle nbits < 8, but you requested " ABSV_PRI, nbits);
+   croak("vunion(): cannot handle nbits < 8, but you requested " ABSV_PRI, nbits);
  a = SvPV(avec,alen);
  b = SvPV(bvec,blen);
  na = alen*8/nbits;
@@ -428,15 +428,12 @@ CODE:
  for (ai=0,bi=0,ci=0; ai < na && bi < nb; ++ci) {
    aval = absv_vget(a,ai,nbits);
    bval = absv_vget(b,bi,nbits);
-   if (aval < bval) {
+   if (aval <= bval) {
      absv_vset(c,ci,nbits,aval);
      ++ai;
-   } else if (aval > bval) {
+     if (aval == bval) ++bi;
+   } else { //-- aval > bval
      absv_vset(c,ci,nbits,bval);
-     ++bi;
-   } else { //-- aval==bval
-     absv_vset(c,ci,nbits,aval);
-     ++ai;
      ++bi;
    }
  }
@@ -450,7 +447,7 @@ OUTPUT:
 
 ##--------------------------------------------------------------
 SV*
-vvintersect(SV *avec, SV *bvec, ABSV_UINT nbits)
+vintersect(SV *avec, SV *bvec, ABSV_UINT nbits)
 PREINIT:
   const uchar *a, *b;
   uchar *c;
@@ -458,11 +455,11 @@ PREINIT:
   ABSV_UINT na,nb,nc, ai,blo,bi,ci, aval,bval;
 CODE:
  if (nbits < 8)
-   croak("vvintersect(): cannot handle nbits < 8, but you requested " ABSV_PRI, nbits);
+   croak("vintersect(): cannot handle nbits < 8, but you requested " ABSV_PRI, nbits);
  a = SvPV(avec,alen);
  b = SvPV(bvec,blen);
  if (blen < alen) {
-   //-- ensure shorter set is "a"
+   //-- ensure smaller set is "a"
    const uchar *tmp = b;
    STRLEN tmplen = blen;
    b = a;
@@ -491,7 +488,7 @@ OUTPUT:
 
 ##--------------------------------------------------------------
 SV*
-vvsetdiff(SV *avec, SV *bvec, ABSV_UINT nbits)
+vsetdiff(SV *avec, SV *bvec, ABSV_UINT nbits)
 PREINIT:
   const uchar *a, *b;
   uchar *c;
@@ -499,7 +496,7 @@ PREINIT:
   ABSV_UINT na,nb,nc, ai,blo,bi,ci, aval,bval;
 CODE:
  if (nbits < 8)
-   croak("vvsetdiff(): cannot handle nbits < 8, but you requested " ABSV_PRI, nbits);
+   croak("vsetdiff(): cannot handle nbits < 8, but you requested " ABSV_PRI, nbits);
  a = SvPV(avec,alen);
  b = SvPV(bvec,blen);
  na = alen*8/nbits;
