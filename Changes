@@ -1,5 +1,12 @@
 Revision history for Perl module Algorithm::BinarySearch::Vec
 
+v0.08 Thu, 01 Sep 2016 12:09:31 +0200 moocow
+	* ensure $Config{use64bitint} before setting HAVE_QUAD
+	  - should fix weird errors on e.g. 32-bit freebsd without perl -use64bitint compile-time option
+	  - compare cpantesters results
+	    ~ WITH    -use64bitint: http://www.cpantesters.org/cpan/report/749d41d2-6a1e-11e6-8807-814d1da4c10f
+	    ~ WITHOUT -use64bitint: http://www.cpantesters.org/cpan/report/228a2396-6a47-11e6-8807-814d1da4c10f
+
 v0.07 Mon, 18 Apr 2016 16:42:44 +0200 moocow
 	* added support for nbits==64; indices are still always 32-bit
 	  - for batch vector-wise search variants we'll need xs sub variants to ensure compatibility

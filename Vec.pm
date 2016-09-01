@@ -8,7 +8,7 @@ use strict;
 use bytes;
 
 our @ISA = qw(Exporter);
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 
 our ($HAVE_XS);
 eval {
