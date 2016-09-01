@@ -1,0 +1,349 @@
+<?xml version="1.0"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-gb" lang="en-gb">
+<head>
+
+
+
+  <title>CPAN Testers Reports: Report for Algorithm-BinarySearch-Vec-0.07</title>
+
+  <meta http-equiv="Content-Type"         content="text/html; charset=UTF-8" />
+  <meta http-equiv="Content-Language"     content="en-gb" />
+  <meta http-equiv="Content-Style-Type"   content="text/css" />
+  <meta http-equiv="Content-Script-Type"  content="text/javascript" />
+
+  <meta name="Generator"    content="Labyrinth" />
+  <meta name="copyright"    content="Copyright (C) 2007-2013 CPAN Testers" />
+  <meta name="title"        content="CPAN Testers Reports" />
+  <meta name="author"       content="Barbie" />
+  <meta name="language"     content="en" />
+  <meta name="keywords"     content="perl, cpan, test, testing, tester, testers, reports, smoke, smoker, black box, automated, automation" />
+  <meta name="description"  content="Report listings of distributions and authors from reports submitted by the CPAN Testers community, who automatically black box test submissions to Perl's CPAN code repository" />
+
+
+  <link rel="stylesheet" type="text/css" media="screen,projection,print" href="/css/layout_wide.css" />
+
+  <script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+var pageTracker = _gat._getTracker("UA-1826389-16");
+pageTracker._trackPageview();
+</script>
+<script type="text/javascript">
+function goThere(loc) {
+  window.location.href=loc;
+}
+</script>
+
+<!--
+  Site Layout, Design &amp; Development by Miss Barbell Productions
+
+  Valid XHTML 1.0 - http://validator.w3.org/check?uri=referer
+  Powered by LAMP (Linux, Apache, MySQL &amp; Perl) technologies.
+  Produced by LABYRINTH, a state of the art Website Management System
+  available from Miss Barbell Productions.
+  For more information contact Barbie <barbie@missbarbell.co.uk>
+
+  Smoke Box image copyright (c) Tyson Ibele 2004 (http://www.tysonibele.com/Main/gallery.htm)
+-->
+
+</head>
+
+<body>
+  
+  <div class="page-container">
+
+    
+    <div class="main">
+ 
+      
+      <div class="main-content">
+
+        
+        <h1 class="pagetitle">Report for <a href="http://search.cpan.org/dist/Algorithm-BinarySearch-Vec">Algorithm-BinarySearch-Vec-0.07</a></h1>
+        <div class="column1-unit">
+
+          
+  
+          <div class="orange_buttons">
+      <a rel="nofollow" href="/cpan/report/228a2396-6a47-11e6-8807-814d1da4c10f?raw=1" rel="nofollow">Raw</a>      <a rel="nofollow" href="/distro/A/Algorithm-BinarySearch-Vec.html?version=0.07">Back</a>      </div>
+
+<pre>
+From: <strong>Chris Williams BINGOS</strong>
+Subject: <strong>FAIL Algorithm-BinarySearch-Vec-0.07 v5.22.0 FreeBSD</strong>
+Date: <strong>2016-08-24T22:07:23Z</strong>
+
+This distribution has been tested as part of the CPAN Testers
+project, supporting the Perl programming language.  See
+http://wiki.cpantesters.org/ for more information or email
+questions to cpan-testers-discuss@perl.org
+
+
+--
+
+Dear Bryan Jurish,
+
+This is a computer-generated error report created automatically by
+CPANPLUS, version 0.9160. Testers personal comments may appear
+at the end of this report.
+
+
+Thank you for uploading your work to CPAN.  However, it appears that
+there were some problems testing your distribution.
+
+TEST RESULTS:
+
+Below is the error stack from stage 'make test':
+
+"/usr/home/cpan/pit/thr/perl-5.22.0/bin/perl" -MExtUtils::Command::MM -e 'cp_nonempty' -- Vec.bs blib/arch/auto/Algorithm/BinarySearch/Vec/Vec.bs 644
+PERL_DL_NONLAZY=1 "/usr/home/cpan/pit/thr/perl-5.22.0/bin/perl" "-MExtUtils::Command::MM" "-MTest::Harness" "-e" "undef *Test::Harness::Switches; test_harness(0, 'blib/lib', 'blib/arch')" t/*.t
+t/01_ini.t ..... ok
+t/02_const.t ... ok
+
+#   Failed test 'vset($vec,index=7,nbits=64,val=4294967297); vec(...)==4294967297'
+#   at t/03_access.t line 22.
+#          got: '0'
+#     expected: '4294967297'
+
+#   Failed test 'vec($vec,index=7,nbits=64)=4294967297; vget(...)==4294967297'
+#   at t/03_access.t line 33.
+#          got: '0'
+#     expected: '4294967297'
+# Looks like you failed 2 tests of 28.
+t/03_access.t .. 
+Dubious, test returned 2 (wstat 512, 0x200)
+Failed 2/28 subtests 
+t/04_search.t .. ok
+
+#   Failed test 'check_setop: _vunion(nbits=64,al=[1 2 3 4 5 6 7 8 9],bl=[2 4 6 8 10 12 14]) == [1 2 3 4 5 6 7 8 9 10 12 14]'
+#   at t/05_setops.t line 60.
+#          got: '0 0 0 0 0 0 0 0 0'
+#     expected: '1 2 3 4 5 6 7 8 9 10 12 14'
+
+#   Failed test 'check_setop: XS::vunion(nbits=64,al=[1 2 3 4 5 6 7 8 9],bl=[2 4 6 8 10 12 14]) == [1 2 3 4 5 6 7 8 9 10 12 14]'
+#   at t/05_setops.t line 60.
+#          got: '0 0 0 0 0 0 0 0 0'
+#     expected: '1 2 3 4 5 6 7 8 9 10 12 14'
+
+#   Failed test 'check_setop: _vintersect(nbits=64,al=[1 2 3 4 5 6 7 8 9],bl=[2 4 6 8 10 12 14]) == [2 4 6 8]'
+#   at t/05_setops.t line 60.
+#          got: '0 0 0 0 0 0 0'
+#     expected: '2 4 6 8'
+
+#   Failed test 'check_setop: XS::vintersect(nbits=64,al=[1 2 3 4 5 6 7 8 9],bl=[2 4 6 8 10 12 14]) == [2 4 6 8]'
+#   at t/05_setops.t line 60.
+#          got: '0 0 0 0 0 0 0'
+#     expected: '2 4 6 8'
+
+#   Failed test 'check_setop: _vsetdiff(nbits=64,al=[1 2 3 4 5 6 7 8 9],bl=[2 4 6 8 10 12 14]) == [1 3 5 7 9]'
+#   at t/05_setops.t line 60.
+#          got: ''
+#     expected: '1 3 5 7 9'
+
+#   Failed test 'check_setop: XS::vsetdiff(nbits=64,al=[1 2 3 4 5 6 7 8 9],bl=[2 4 6 8 10 12 14]) == [1 3 5 7 9]'
+#   at t/05_setops.t line 60.
+#          got: ''
+#     expected: '1 3 5 7 9'
+# Looks like you failed 6 tests of 24.
+t/05_setops.t .. 
+Dubious, test returned 6 (wstat 1536, 0x600)
+Failed 6/24 subtests 
+
+Test Summary Report
+-------------------
+t/03_access.t (Wstat: 512 Tests: 28 Failed: 2)
+  Failed tests:  27-28
+  Non-zero exit status: 2
+t/05_setops.t (Wstat: 1536 Tests: 24 Failed: 6)
+  Failed tests:  4, 8, 12, 16, 20, 24
+  Non-zero exit status: 6
+Files=5, Tests=102,  1 wallclock secs ( 0.03 usr  0.02 sys +  0.38 cusr  0.05 csys =  0.48 CPU)
+Result: FAIL
+Failed 2/5 test programs. 8/102 subtests failed.
+*** Error code 6
+
+Stop.
+make: stopped in /usr/home/cpan/pit/thr/conf/perl-5.22.0/.cpanplus/5.22.0/build/A5L0XFX4mM/Algorithm-BinarySearch-Vec-0.07
+
+
+PREREQUISITES:
+
+Here is a list of prerequisites you specified and versions we
+managed to load:
+
+	  Module Name                        Have     Want
+	  ExtUtils::MakeMaker                7.18        0
+	  Test::More                     1.302019        0
+
+Perl module toolchain versions installed:
+	Module Name                        Have
+	CPANPLUS                         0.9160
+	CPANPLUS::Dist::Build              0.78
+	Cwd                                3.62
+	ExtUtils::CBuilder             0.280224
+	ExtUtils::Command                  7.18
+	ExtUtils::Install                  2.04
+	ExtUtils::MakeMaker                7.18
+	ExtUtils::Manifest                 1.70
+	ExtUtils::ParseXS                  3.30
+	File::Spec                         3.62
+	Module::Build                    0.4218
+	Pod::Parser                        1.63
+	Pod::Simple                        3.29
+	Test2                          1.302019
+	Test::Harness                      3.36
+	Test::More                     1.302019
+	version                          0.9916
+
+******************************** NOTE ********************************
+The comments above are created mechanically, possibly without manual
+checking by the sender.  As there are many people performing automatic
+tests on each upload to CPAN, it is likely that you will receive
+identical messages about the same problem.
+
+If you believe that the message is mistaken, please reply to the first
+one with correction and/or additional informations, and do not take
+it personally.  We appreciate your patience. :)
+**********************************************************************
+
+Additional comments:
+
+
+This report was machine-generated by CPANPLUS::Dist::YACSmoke 0.98.
+Powered by minismokebox version 0.58
+
+------------------------------
+ENVIRONMENT AND OTHER CONTEXT
+------------------------------
+
+Environment variables:
+
+    AUTOMATED_TESTING = 1
+    NONINTERACTIVE_TESTING = 1
+    PATH = /sbin:/bin:/usr/sbin:/usr/bin:/usr/games:/usr/local/sbin:/usr/local/bin:/home/cpan/bin
+    PERL5LIB = :/usr/home/cpan/pit/thr/conf/perl-5.22.0/.cpanplus/5.22.0/build/A5L0XFX4mM/Algorithm-BinarySearch-Vec-0.07/blib/lib:/usr/home/cpan/pit/thr/conf/perl-5.22.0/.cpanplus/5.22.0/build/A5L0XFX4mM/Algorithm-BinarySearch-Vec-0.07/blib/arch
+    PERL5_CPANPLUS_IS_RUNNING = 6311
+    PERL5_CPANPLUS_IS_VERSION = 0.9160
+    PERL5_MINISMOKEBOX = 0.58
+    PERL5_YACSMOKE_BASE = /usr/home/cpan/pit/thr/conf/perl-5.22.0
+    PERL_EXTUTILS_AUTOINSTALL = --defaultdeps
+    PERL_MM_USE_DEFAULT = 1
+    SHELL = /usr/local/bin/bash
+    TERM = screen
+
+Perl special variables (and OS-specific diagnostics, for MSWin32):
+
+    Perl: $^X = /usr/home/cpan/pit/thr/perl-5.22.0/bin/perl
+    UID:  $&lt;  = 1002
+    EUID: $&gt;  = 1002
+    GID:  $(  = 1002 1002
+    EGID: $)  = 1002 1002
+
+
+-------------------------------
+
+
+--
+
+Summary of my perl5 (revision 5 version 22 subversion 0) configuration:
+   
+  Platform:
+    osname=freebsd, osvers=10.3-release-p2, archname=i386-freebsd-thread-multi
+    uname='freebsd froggle 10.3-release-p2 freebsd 10.3-release-p2 #0: wed may 4 14:06:02 utc 2016 root@amd64-builder.daemonology.net:usrobjusrsrcsysgeneric i386 '
+    config_args='-des -Dprefix=/usr/home/cpan/pit/thr/perl-5.22.0 -Dusethreads'
+    hint=recommended, useposix=true, d_sigaction=define
+    useithreads=define, usemultiplicity=define
+    use64bitint=undef, use64bitall=undef, uselongdouble=undef
+    usemymalloc=n, bincompat5005=undef
+  Compiler:
+    cc='cc', ccflags ='-DHAS_FPSETMASK -DHAS_FLOATINGPOINT_H -fno-strict-aliasing -pipe -fstack-protector -I/usr/local/include -D_FORTIFY_SOURCE=2',
+    optimize='-O',
+    cppflags='-DHAS_FPSETMASK -DHAS_FLOATINGPOINT_H -fno-strict-aliasing -pipe -fstack-protector -I/usr/local/include'
+    ccversion='', gccversion='4.2.1 Compatible FreeBSD Clang 3.4.1 (tags/RELEASE_34/dot1-final 208032)', gccosandvers=''
+    intsize=4, longsize=4, ptrsize=4, doublesize=8, byteorder=1234, doublekind=3
+    d_longlong=define, longlongsize=8, d_longdbl=define, longdblsize=12, longdblkind=3
+    ivtype='long', ivsize=4, nvtype='double', nvsize=8, Off_t='off_t', lseeksize=8
+    alignbytes=4, prototype=define
+  Linker and Libraries:
+    ld='cc', ldflags ='-pthread -Wl,-E  -fstack-protector -L/usr/local/lib'
+    libpth=/usr/lib /usr/local/lib /usr/include/clang/3.4.1 /usr/lib
+    libs=-lpthread -lgdbm -lm -lcrypt -lutil
+    perllibs=-lpthread -lm -lcrypt -lutil
+    libc=, so=so, useshrplib=false, libperl=libperl.a
+    gnulibc_version=''
+  Dynamic Linking:
+    dlsrc=dl_dlopen.xs, dlext=so, d_dlsymun=undef, ccdlflags=' '
+    cccdlflags='-DPIC -fPIC', lddlflags='-shared  -L/usr/local/lib -fstack-protector'
+
+
+Characteristics of this binary (from libperl): 
+  Compile-time options: HAS_TIMES MULTIPLICITY PERLIO_LAYERS
+                        PERL_DONT_CREATE_GVSV
+                        PERL_HASH_FUNC_ONE_AT_A_TIME_HARD
+                        PERL_IMPLICIT_CONTEXT PERL_MALLOC_WRAP
+                        PERL_NEW_COPY_ON_WRITE PERL_PRESERVE_IVUV
+                        USE_ITHREADS USE_LARGE_FILES USE_LOCALE
+                        USE_LOCALE_COLLATE USE_LOCALE_CTYPE
+                        USE_LOCALE_NUMERIC USE_LOCALE_TIME USE_PERLIO
+                        USE_PERL_ATOF USE_REENTRANT_API
+  Locally applied patches:
+	Devel::PatchPerl 1.42
+  Built under freebsd
+  Compiled at May  8 2016 10:16:58
+  %ENV:
+    PERL5LIB=":/usr/home/cpan/pit/thr/conf/perl-5.22.0/.cpanplus/5.22.0/build/A5L0XFX4mM/Algorithm-BinarySearch-Vec-0.07/blib/lib:/usr/home/cpan/pit/thr/conf/perl-5.22.0/.cpanplus/5.22.0/build/A5L0XFX4mM/Algorithm-BinarySearch-Vec-0.07/blib/arch"
+    PERL5_CPANPLUS_IS_RUNNING="6311"
+    PERL5_CPANPLUS_IS_VERSION="0.9160"
+    PERL5_MINISMOKEBOX="0.58"
+    PERL5_YACSMOKE_BASE="/usr/home/cpan/pit/thr/conf/perl-5.22.0"
+    PERL_EXTUTILS_AUTOINSTALL="--defaultdeps"
+    PERL_MM_USE_DEFAULT="1"
+  @INC:
+    /usr/home/cpan/pit/thr/conf/perl-5.22.0/.cpanplus/5.22.0/build/A5L0XFX4mM/Algorithm-BinarySearch-Vec-0.07/blib/lib
+    /usr/home/cpan/pit/thr/conf/perl-5.22.0/.cpanplus/5.22.0/build/A5L0XFX4mM/Algorithm-BinarySearch-Vec-0.07/blib/arch
+    /usr/home/cpan/pit/thr/perl-5.22.0/lib/site_perl/5.22.0/i386-freebsd-thread-multi
+    /usr/home/cpan/pit/thr/perl-5.22.0/lib/site_perl/5.22.0
+    /usr/home/cpan/pit/thr/perl-5.22.0/lib/5.22.0/i386-freebsd-thread-multi
+    /usr/home/cpan/pit/thr/perl-5.22.0/lib/5.22.0
+    .</pre>
+    
+  
+
+        </div>
+        <hr class="clear-contentunit" />
+
+      </div>
+      <div class="blank"></div>
+      </div>
+    </div>
+      
+          
+    <div class="footer">
+    <p>
+    The CPAN Testers server is supported and funded by <a href="http://birmingham.pm.org">Birmingham Perl Mongers</a>.<br />
+    CPAN Testers Reports v is powered by <a href="http://labyrinth.missbarbell.co.uk">Labyrinth</a> v5.32<br />
+    All data and statistics are &#169; 1999-2015 CPA6 Testers, and available under the Artistic License 2.0. Comments and design patches to barbie@cpan.org.</p>
+    
+		<p>
+    The CPAN Testers Family: <br />
+      <a href="http://blog.cpantesters.org" title="CPAN Testers Blog">Blog</a>         &#8226;
+      <a href="http://www.cpantesters.org" title="CPAN Testers Reports">Reports</a>      &#8226;
+      <a href="http://wiki.cpantesters.org" title="CPAN Testers Wiki">Wiki</a>         &#8226;
+      <a href="http://stats.cpantesters.org" title="CPAN Testers Statistics">Statistics</a>   &#8226;
+      <a href="http://pass.cpantesters.org" title="CPAN Testers PASS Matrix">PASS Matrix</a>  &#8226;
+      <a href="http://prefs.cpantesters.org" title="CPAN Testers Preferences">Preferences</a>  &#8226;
+      <a href="http://metabase.cpantesters.org" title="CPAN Testers Metabase">Metabase</a>     &#8226;
+      <a href="http://devel.cpantesters.org" title="CPAN Testers Development">Development</a>  &#8226;
+      <a href="http://deps.cpantesters.org" title="CPAN Dependencies">Dependencies</a> &#8226;
+      <a href="http://matrix.cpantesters.org" title="CPAN Testers Matrix">Matrix</a>       &#8226;
+      <a href="http://analysis.cpantesters.org" title="CPAN Testers Analysis">Analysis</a>     &#8226;
+      <a href="http://admin.cpantesters.org" title="CPAN Testers Admin">Admin</a></p>
+    <p>
+    CPAN Testers, supporting the Perl programming language since 1999.</p>
+</div>
+   
+
+</body>
+</html>
