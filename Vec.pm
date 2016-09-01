@@ -28,9 +28,12 @@ eval {
 ##======================================================================
 
 no warnings 'portable'; ##-- avoid "Bit vector size > 32 non-portable" errors for native quads
-our $HAVE_QUAD     = $HAVE_XS ? Algorithm::BinarySearch::Vec::XS::HAVE_QUAD()     : $Config::Config{d_quad};
-our $KEY_NOT_FOUND = $HAVE_XS ? Algorithm::BinarySearch::Vec::XS::KEY_NOT_FOUND() : 0xffffffff;
-#our $KEY_NOT_FOUND = $HAVE_XS ? Algorithm::BinarySearch::Vec::XS::KEY_NOT_FOUND() : ($HAVE_QUAD ? 0xffffffffffffffff : 0xffffffff);
+our $HAVE_QUAD     = ($Config::Config{use64bitint} ##-- avoid errors with xs U64TYPE but no perl-side 64bit ints (e.g. freebsd w/o -use64bitint perl config option)
+		      &&
+		      ($HAVE_XS ? Algorithm::BinarySearch::Vec::XS::HAVE_QUAD()     : $Config::Config{d_quad})
+		     );
+our $KEY_NOT_FOUND =   $HAVE_XS ? Algorithm::BinarySearch::Vec::XS::KEY_NOT_FOUND() : 0xffffffff;
+#our $KEY_NOT_FOUND =  $HAVE_XS ? Algorithm::BinarySearch::Vec::XS::KEY_NOT_FOUND() : ($HAVE_QUAD ? 0xffffffffffffffff : 0xffffffff);
 
 our (%EXPORT_TAGS, @EXPORT_OK, @EXPORT);
 BEGIN {

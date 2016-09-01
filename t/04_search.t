@@ -54,14 +54,15 @@ sub fstr {
 
 sub check_search {
   my ($func,$nbits,$l,$key,$want) = @_;
+  my $label = "check_search: ".fstr($func)."(nbits=$nbits,key=$key,l=[".l2str($l)."]) == $want";
  SKIP: {
-    skip("XS support disabled", 1) if ($func =~ /\bXS\b/ && !$Algorithm::BinarySearch::Vec::HAVE_XS);
+    skip("$label: XS support disabled", 1) if ($func =~ /\bXS\b/ && !$Algorithm::BinarySearch::Vec::HAVE_XS);
     my $code = eval "\\\&$func";
     my $v    = makevec($nbits,$l);
     my $i    = $code->($v,$key,$nbits); #, 0,$#$l);
     my $istr = n2str($i);
     my $wstr = n2str($want);
-    is($istr, $wstr, "check_search: ".fstr($func)."(nbits=$nbits,key=$key,l=[".l2str($l)."]) == $want");
+    is($istr, $wstr, $label);
     return ($istr eq $wstr);
   }
 }

@@ -14,8 +14,9 @@ my $HAVE_QUAD = $Algorithm::BinarySearch::Vec::HAVE_QUAD;
 sub check_set {
   my ($i,$nbits,$val) = @_;
   my $vec='';
+  my $label = "vset(\$vec,index=$i,nbits=$nbits,val=$val); vec(...)==$val";
  SKIP: {
-    skip("64-bit support disabled", 1) if ($nbits > 32 && !$HAVE_QUAD);
+    skip("$label: 64-bit support disabled", 1) if ($nbits > 32 && !$HAVE_QUAD);
     vec($vec,$i,$nbits) = 0; ##-- pre-allocate (no longer required?)
     Algorithm::BinarySearch::Vec::vset($vec,$i,$nbits,$val);
     my $vval = vec($vec,$i,$nbits);
@@ -26,11 +27,12 @@ sub check_set {
 sub check_get {
   my ($i,$nbits,$val) = @_;
   my $vec='';
+  my $label = "vec(\$vec,index=$i,nbits=$nbits)=$val; vget(...)==$val";
  SKIP: {
-    skip("64-bit support disabled", 1) if ($nbits > 32 && !$HAVE_QUAD);
+    skip("$label: 64-bit support disabled", 1) if ($nbits > 32 && !$HAVE_QUAD);
     vec($vec,$i,$nbits) = $val;
     my $vval = Algorithm::BinarySearch::Vec::vget($vec,$i,$nbits);
-    is($vval, $val, "vec(\$vec,index=$i,nbits=$nbits)=$val; vget(...)==$val");
+    is($vval, $val, $label);
   }
 }
 
